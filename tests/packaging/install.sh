@@ -7,7 +7,7 @@ version=$(cat VERSION)
 src=/usr/src/gpu-unlock-$version
 fw=/usr/lib/firmware/gpu-unlock/610.43.03
 dracut=/usr/lib/dracut/dracut.conf.d/gpu-unlock.conf
-. /etc/os-release
+ID=$(sh .github/ci/os-release.sh ID)
 case "$ID" in
 debian|ubuntu)
 	install="apt-get install -qy --no-install-recommends ./build/deb/*.deb"

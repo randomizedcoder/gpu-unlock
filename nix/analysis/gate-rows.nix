@@ -34,6 +34,8 @@ in
   (none "sparse" "sparse: allocation flags passed as gfp_t"
     "incorrect type in argument [0-9]+ \\(different base types\\)"
   )
+  # A sourced /etc/os-release is a file shellcheck cannot follow.
+  (none "shellcheck" "shellcheck: no os-release sourced that it cannot follow" "\\[SC1091\\]")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")

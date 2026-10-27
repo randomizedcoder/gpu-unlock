@@ -21,7 +21,7 @@ commit=$(packaging/snapshot.sh)
 # The same setup as the CI jobs. The job runs on a clone so that nothing
 # in the checkout ends up owned by root.
 script='
-. /etc/os-release
+ID=$(sh /src/.github/ci/os-release.sh ID)
 case "$ID" in
 debian|ubuntu)
 	apt-get update -q
