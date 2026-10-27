@@ -15,6 +15,8 @@
 #   nix build .#analysis-standard
 #   nix build .#analysis-deep
 #
+# Other flakes: overlays.default adds pkgs.gpu-unlock (the package scope).
+#
 # NixOS: import nixosModules.default and set
 #
 #   hardware.gpu-unlock = {
@@ -47,8 +49,6 @@
         default = kernelModule;
         kernel-module = kernelModule;
         inherit (scope) firmware;
-        nvidia-kernel-module-source = scope.inputs.kernelModuleSource;
-        nvidia-installer = scope.inputs.installer;
       }
       // lib.mapAttrs' (name: lib.nameValuePair "analysis-${name}") (
         lib.filterAttrs (_: lib.isDerivation) analysis
@@ -67,7 +67,7 @@
             module = self.nixosModules.default;
           }
           ++ scope.callPackage ./nix/tests/sources.nix { }
-          ++ scope.callPackage ./nix/tests/wiring.nix { }
+          ++ scope.callPackage ./nix/tests/wiring.nix { overlay = self.overlays.default; }
           ++ scope.callPackage ./nix/tests/inputs.nix { }
         );
       };
@@ -75,6 +75,11 @@
       devShells.${system}.default = scope.devShell;
 
       nixosModules.default = ./nix/nixos-module.nix;
+
+      # pkgs.gpu-unlock: the scope of nix/packages.nix, built from the
+      # consumer's nixpkgs. Override its kernel with
+      # pkgs.gpu-unlock.overrideScope (_: _: { kernelPackages = ...; }).
+      overlays.default = final: _: { gpu-unlock = final.callPackage ./nix/packages.nix { }; };
 
       formatter.${system} = pkgs.nixfmt-tree;
     };

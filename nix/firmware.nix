@@ -60,7 +60,10 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  # The NVIDIA inputs stay reachable (nix build .#firmware.inputs.installer)
+  # without being flake packages that a cache push would upload.
   passthru = {
+    inherit inputs;
     inherit (inputs) nvVersion;
   };
 

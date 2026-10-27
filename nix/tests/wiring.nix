@@ -14,6 +14,8 @@
   kernelModule,
   analysis,
   devShell,
+  firmware,
+  overlay,
 }:
 
 let
@@ -76,6 +78,16 @@ map (name: {
   {
     description = "wiring, positive: the dev shell disables the module's hardening";
     actual = devShell.hardeningDisable == kernelModule.hardeningDisable;
+    expected = true;
+  }
+  {
+    description = "wiring, positive: the overlay builds the same module as the flake";
+    actual = (pkgs.extend overlay).gpu-unlock.kernelModule.drvPath == kernelModule.drvPath;
+    expected = true;
+  }
+  {
+    description = "wiring, positive: the NVIDIA installer is reachable from the firmware";
+    actual = lib.hasSuffix ".run" (need firmware "inputs").installer.name;
     expected = true;
   }
   {
