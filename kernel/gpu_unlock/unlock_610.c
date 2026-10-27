@@ -234,7 +234,8 @@ static void gu_read_boot_state(struct unlock_transaction_work *work,
 
 /* Preserve the first failure state before unwind/FLR can hide it.  Every
  * read here is diagnostic: errors are ignored and must not replace the
- * original result. */
+ * original result.
+ */
 static void gu_snapshot(struct unlock_transaction_work *work, const char *function,
 			unsigned int line, int error)
 {
@@ -418,7 +419,8 @@ static int unlock_transaction_unwind(struct unlock_transaction_work *work)
 	if (want != now && pci_write_config_word(work->pdev, PCI_COMMAND, want))
 		return GU_RESULT(-EIO);
 	/* nvidia does not set BME again on resume. pci_clear_master() before the
-	 * FLR also cleared the PCI core's record of it; set both back. */
+	 * FLR also cleared the PCI core's record of it; set both back.
+	 */
 	if (work->resume && (want & PCI_COMMAND_MASTER))
 		pci_set_master(work->pdev);
 	if (diag_pci_word(work, false, PCI_COMMAND, &now))
@@ -445,7 +447,8 @@ static int unlock_transaction_layout(struct unlock_transaction_work *work)
 	    read_bar(work, GU_MMU_LOCK_ADDR_HI_OFFSET, &hi) || hi == ~0u)
 		return GU_RESULT(-ENODEV);
 	/* Keep the cold board inputs in the USB kernel log even on layout failure.
-	 * Register values after NVIDIA binds cannot reconstruct this state. */
+	 * Register values after NVIDIA binds cannot reconstruct this state.
+	 */
 	dev_dbg(&work->pdev->dev,
 		 "layout inputs: fb_mb=%#x vga=%#x mmu_plm=%#x mmu_lo=%#x mmu_hi=%#x image=%llu boot=%u\n",
 		 mb, vga, plm, lo, hi, (unsigned long long)work->bundle->image_span.size,
@@ -472,7 +475,8 @@ static int unlock_transaction_layout(struct unlock_transaction_work *work)
 		 * memmgrBlockMemLockedMemory_GA100 only treats the lock as the
 		 * VBIOS end-of-FB reservation when its exclusive high address is
 		 * the FB top. A lock elsewhere is not that reservation. GA102
-		 * has no scrubber, so WPR must stay in the pre-scrubbed top. */
+		 * has no scrubber, so WPR must stay in the pre-scrubbed top.
+		 */
 		u64 mmu_hi = (u64)(hi >> 4) << 12;
 		u64 mmu_top = mmu_hi > ~0ull - 0xffffull ? ~0ull :
 			(mmu_hi + 0xffffull) & ~0xffffull;
@@ -598,7 +602,8 @@ static int unlock_transaction_claim(struct unlock_transaction_work *work)
 	dev_dbg(&work->pdev->dev, "claim: power=%d pm_cap=%#x flags=%#x\n",
 		work->pdev->current_state, work->pdev->pm_cap, work->pdev->dev_flags);
 	/* Older kernels (seen on 6.8 and 6.14) leave a device no driver has
-	 * enabled at PCI_UNKNOWN. Accept that only when PMCSR confirms D0. */
+	 * enabled at PCI_UNKNOWN. Accept that only when PMCSR confirms D0.
+	 */
 	if ((work->pdev->current_state != PCI_D0 &&
 	     (work->pdev->current_state != PCI_UNKNOWN || !work->pdev->pm_cap)) ||
 	    (work->pdev->pm_cap &&
@@ -616,7 +621,8 @@ static int unlock_transaction_claim(struct unlock_transaction_work *work)
 	work->cmd_valid = true;
 	/* Some firmware (Supermicro X11 AMI) hands every card over with BME set,
 	 * whatever its option ROM and bus master settings. No driver is bound,
-	 * and the WPR2 check still refuses a card that one has initialised. */
+	 * and the WPR2 check still refuses a card that one has initialised.
+	 */
 	if (command & PCI_COMMAND_MASTER) {
 		command &= ~PCI_COMMAND_MASTER;
 		if (pci_write_config_word(work->pdev, PCI_COMMAND, command) ||
@@ -693,7 +699,8 @@ static int unlock_transaction_dma(struct unlock_transaction_work *work)
 	    alloc_dma(work, "metadata", &work->meta, GU_WPR_META_SIZE))
 		return GU_RESULT(-ENOMEM);
 	/* No launch precedes the first table entry, so the slots stay unused
-	 * until run_privileged_writes() builds the image for its write. */
+	 * until run_privileged_writes() builds the image for its write.
+	 */
 	{
 		int ret = gu_payload_build(work->payload, work->buffer.cpu, 0, 0);
 
@@ -738,7 +745,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 	int ret;
 
 	/* kgspExtractVbiosFromRom_TU102 reads NV_PROM_DATA, up to 1 MiB.
-	 * pci_map_rom stops at the PCI last-image flag and hides the VN extension. */
+	 * pci_map_rom stops at the PCI last-image flag and hides the VN extension.
+	 */
 	dev_dbg(&work->pdev->dev, "FWSEC: reading PROM at %#x\n", GU_PROM_DATA_OFFSET);
 	if (work->bar_len < GU_PROM_DATA_OFFSET + 0x1a)
 		return GU_RESULT(-ENODEV);
@@ -791,7 +799,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		goto out;
 	}
 	/* Preserve conservative DMA retention from the moment FWSEC may access it,
-	 * including reset/load failures. Launch evidence is observed separately. */
+	 * including reset/load failures. Launch evidence is observed separately.
+	 */
 	work->firmware_started = true;
 	if (fw.version == 2) {
 		const struct gu_falcon_loader_image program = {
@@ -840,7 +849,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 	/* Match NVIDIA's initialized-WPR2 check as well as the expected low
 	 * address. Never publish Booter metadata for disabled/alien WPR2. FWSEC
 	 * sizes the region itself (0xe1000 bytes on GA102), so the high end is
-	 * only bounded by the reservation. */
+	 * only bounded by the reservation.
+	 */
 	if (!(wpr_hi >> 4) || (wpr_hi >> 4) < (wpr_lo >> 4) ||
 	    ((u64)(wpr_hi >> 4) << 12) >= work->layout.wpr_end ||
 	    (wpr_lo >> 4) != (u32)(frts >> 12))
@@ -851,7 +861,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		/* FWSEC publishes the inclusive 4 KiB end; the Booter decodes
 		 * WPR2_ADDR_HI with a 128 KiB alignment term. Store the Booter
 		 * encoding so restore_frts() writes what the next HS launch
-		 * re-validates, not the FWSEC convention. */
+		 * re-validates, not the FWSEC convention.
+		 */
 		if (frts_end < GU_WPR2_ALIGN || (frts_end & (GU_WPR2_ALIGN - 1))) {
 			ret = -EINVAL;
 		} else {
@@ -983,7 +994,8 @@ static int unlock_transaction_boot(struct unlock_transaction_work *work)
 		return GU_RESULT(-EINVAL);
 	/* This Booter build consumes the WprMeta sysmem address as a 64-bit
 	 * mailbox pair: MAILBOX0 low, MAILBOX1 high.  The reference exit leaves
-	 * the same pair in the mailboxes, which is the completion echo. */
+	 * the same pair in the mailboxes, which is the completion echo.
+	 */
 	if (work->card->family->booter->launch == GU_SEC2_DIRECT) {
 		const struct gu_falcon_direct_image program = {
 			.words = work->booter_buf.cpu,
@@ -1036,7 +1048,8 @@ static int unlock_transaction_boot(struct unlock_transaction_work *work)
 	/* The V67 exit returns the input metadata pointer in the mailboxes; the
 	 * descriptor records that because it is a payload property, not a Booter
 	 * or hardware convention. Payloads without that evidence are accepted on
-	 * the generic halt/RESET_PLM predicate and their mailboxes are logged. */
+	 * the generic halt/RESET_PLM predicate and their mailboxes are logged.
+	 */
 	cleanup_complete = fresh && (reset_plm & 0xff) == 0xff;
 	if (cleanup_complete &&
 	    work->payload->completion == GU_PAYLOAD_HALT_RESET_PLM_ECHO)
@@ -1176,20 +1189,23 @@ static int run_privileged_writes(struct unlock_transaction_work *work,
 			work->target_value = entry->value;
 			after = 0;
 			/* FWSEC completed before the first attempt. Every subsequent
-			 * refill requires the prior invocation to have stopped. */
+			 * refill requires the prior invocation to have stopped.
+			 */
 			if ((i || work->attempt > 1) && !work->invocation_halted)
 				return table_failure(work, "prior-halt", entry, after, -EBUSY);
 			/* FWSEC already left WPR2 at the FRTS carve for the first
 			 * launch, and WPR_CFG is not open yet, so a host write here
 			 * would be a denied PLM access. Every later launch has
-			 * extended WPR2 and needs the carve restored. */
+			 * extended WPR2 and needs the carve restored.
+			 */
 			if (i || work->attempt > 1) {
 				ret = restore_frts(work);
 				if (ret)
 					return table_failure(work, "restore", entry, after, ret);
 			}
 			/* CPUCTL is diagnostic only: after FWSEC, GA102 SEC2 CPUCTL reads
-			 * 0xbadf5620 until the launch resets the engine. */
+			 * 0xbadf5620 until the launch resets the engine.
+			 */
 			if (read_bar(work, entry->addr, &before) ||
 			    (before & 0xffff0000u) == 0xbadf0000u ||
 			    read_bar(work, GU_SEC2_BASE + GU_FALCON_CPUCTL_OFFSET, &ctl) ||
@@ -1242,7 +1258,8 @@ static int run_privileged_writes(struct unlock_transaction_work *work,
 			}
 			/* Only literal idempotent PLMs belong here. A mismatching
 			 * readback after proven halt/cleanup may be retried once.
-			 * Errors/timeouts never replay an uncertain side effect. */
+			 * Errors/timeouts never replay an uncertain side effect.
+			 */
 			table_failure(work, "readback", entry, after, -EIO);
 		}
 		if (after != entry->value)
@@ -1519,7 +1536,8 @@ int gpu_unlock_610_unlock(const struct gu_device *device, const struct gpu_unloc
 		 work->card->family->booter->launch);
 	work->resume = resume;
 	/* After resume GFW may still be running: check and wait before reading
-	 * the layout. Firmware preparation has already completed for the round. */
+	 * the layout. Firmware preparation has already completed for the round.
+	 */
 	ret = resume ? unlock_transaction_suspended(work) : 0;
 	if (!ret && !resume)
 		ret = check_devres_empty(work, "entry");
@@ -1570,7 +1588,8 @@ int gpu_unlock_610_unlock(const struct gu_device *device, const struct gpu_unloc
 		 work->page_count, cleanup);
 	if (work->retained) {
 		/* Firmware may still DMA into these buffers: keep them, the device
-		 * reference and this module until the next power off. */
+		 * reference and this module until the next power off.
+		 */
 		dev_err(&pdev->dev, "firmware did not stop; keeping its DMA buffers until power off\n");
 		__module_get(THIS_MODULE);
 		return ret;

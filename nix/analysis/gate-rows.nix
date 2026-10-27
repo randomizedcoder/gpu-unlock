@@ -41,6 +41,7 @@ in
   (none "checkpatch" "checkpatch: no LINE_SPACING" ": WARNING:LINE_SPACING:")
   (none "checkpatch" "checkpatch: no LEADING_SPACE" ": WARNING:LEADING_SPACE:")
   (none "checkpatch" "checkpatch: no SPACE_BEFORE_TAB" ": WARNING:SPACE_BEFORE_TAB:")
+  (none "checkpatch" "checkpatch: no BLOCK_COMMENT_STYLE" ": WARNING:BLOCK_COMMENT_STYLE:")
   (none "ruff" "ruff: Python in firmware/ and tests/ is clean" "^[^ ]+\\.py:[0-9]+:[0-9]+: ")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
