@@ -17,10 +17,12 @@ WANTED = (*extract_gsp.FIRMWARE, extract_gsp.NOTICE)
 LIMIT = 128 * 1024 * 1024
 
 
-def header(version: str = extract_gsp.VERSION, skip: int | None = 5, pad: int = 0) -> bytes:
+def header(version: str | None = extract_gsp.VERSION, skip: int | None = 5,
+           pad: int = 0) -> bytes:
     """A makeself shell header; the payload starts after skip - 1 lines."""
     lines = [b"#!/bin/sh", b"#" * pad]
-    lines.append(f"version_string={version}".encode())
+    if version is not None:
+        lines.append(f"version_string={version}".encode())
     if skip is not None:
         lines.append(f"skip={skip}".encode())
     return b"\n".join(lines) + b"\n"
@@ -70,8 +72,12 @@ OFFSET_ROWS = (
               "ValueError: installer version is 610.43.04, expected 610.43.03"),
     OffsetRow("negative: no skip= line", header(skip=None),
               "ValueError: not an NVIDIA makeself installer"),
+    OffsetRow("negative: no version_string= line", header(version=None),
+              "ValueError: not an NVIDIA makeself installer"),
+    OffsetRow("boundary: skip=1, the payload is the whole file", header(skip=1), 0),
     OffsetRow("boundary: skip one past the header's lines", header(skip=6),
               "ValueError: installer header is shorter than its skip count"),
+    OffsetRow("corner: skip=0 reads from the start, as tail -n +0 does", header(skip=0), 0),
     OffsetRow("corner: the header past the 1 MiB read window",
               header(pad=extract_gsp.HEADER_BYTES),
               "ValueError: not an NVIDIA makeself installer"),
@@ -101,6 +107,12 @@ MEMBERS_ROWS = (
     MembersRow("boundary: a member of 128 MiB + 1",
                (Member(WANTED[0], LIMIT + 1), *VALID[1:]),
                f"ValueError: not a regular file in installer: {WANTED[0]}"),
+    MembersRow("corner: a member that is a symlink",
+               (Member(WANTED[0], kind=tarfile.SYMTYPE), *VALID[1:]),
+               f"ValueError: not a regular file in installer: {WANTED[0]}"),
+    MembersRow("corner: a member under ./ is not the member",
+               (Member(f"./{WANTED[0]}"), *VALID[1:]),
+               f"ValueError: missing installer member: {WANTED[0]}"),
 )
 
 
@@ -117,7 +129,7 @@ class PayloadRow(NamedTuple):
 
 NOT_TAR = "ValueError: installer payload is not a zstd tar archive"
 PAYLOAD_ROWS = (
-    PayloadRow("corner: a payload zstd cannot read", b"not zstd", NOT_TAR),
+    PayloadRow("negative: a payload zstd cannot read", b"not zstd", NOT_TAR),
     PayloadRow("corner: a zstd payload that is not a tar", zstd(b"not a tar"), NOT_TAR),
 )
 

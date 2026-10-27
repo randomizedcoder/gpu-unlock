@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import struct
+import tempfile
 import unittest
 import zlib
+from pathlib import Path
 from typing import NamedTuple
 
 import extract_boot_assets
@@ -53,6 +55,12 @@ ARRAY_ROWS = (
              "ValueError: missing or duplicate X"),
     ArrayRow("negative: no DATA SIZE line", "static BINDATA_LABEL_X_data[] = { 0x00 };",
              "ValueError: missing storage declaration for X"),
+    ArrayRow("negative: no COMPRESSION line",
+             array("X", DATA).replace("// COMPRESSION: NO\n", ""),
+             "ValueError: missing storage declaration for X"),
+    ArrayRow("negative: compressed data that is not DEFLATE",
+             array("X", DATA, compressed=b"\xff" * 8 + struct.pack("<II", 0, 16)),
+             "error: Error -3 while decompressing data: invalid block type"),
     ArrayRow("negative: a token that is not a byte", array("X", DATA, tokens="0x00, 0x100"),
              "ValueError: non-byte token in generated array"),
     ArrayRow("negative: no closing brace",
@@ -69,10 +77,18 @@ ARRAY_ROWS = (
     ArrayRow("boundary: DATA SIZE 0", array("X", b"", size=0, tokens="0x00"),
              "ValueError: asset exceeds extraction limit"),
     ArrayRow("boundary: a one-byte array", array("X", b"\x7f"), b"\x7f"),
+    ArrayRow("boundary: DATA SIZE 16 MiB is within the limit (then fails on length)",
+             array("X", DATA, size=LIMIT),
+             f"ValueError: X: inflated 16 bytes, header says {LIMIT}"),
     ArrayRow("boundary: DATA SIZE 16 MiB + 1", array("X", DATA, size=LIMIT + 1),
              "ValueError: asset exceeds extraction limit"),
     ArrayRow("corner: a trailing comma and spaces around tokens",
              array("X", b"\x01\x02", tokens=" 0x01 ,\n 0x02 , "), b"\x01\x02"),
+    ArrayRow("corner: upper-case hex digits", array("X", b"\xab\xcd", tokens="0xAB, 0xcD"),
+             b"\xab\xcd"),
+    ArrayRow("corner: storage lines more than 400 characters above the array",
+             array("X", DATA).replace("static", "/*" + " " * 400 + "*/\nstatic"),
+             "ValueError: missing storage declaration for X"),
     ArrayRow("corner: a byte after the trailer",
              array("X", DATA, compressed=deflate(DATA) + b"\x00"),
              "ValueError: truncated, trailing or oversized compressed stream"),
@@ -121,12 +137,23 @@ BUNDLE_ROWS = (
               "ValueError: unsupported production Booter signature/application table"),
     BundleRow("negative: a ucode id of 0", booter(ucode=0),
               "ValueError: unsupported production Booter signature/application table"),
+    BundleRow("negative: fewer signature bytes than NUM_SIGS * 384", booter(num_sigs=2),
+              "ValueError: unsupported production Booter signature/application table"),
     BundleRow("boundary: the patch below DMEM", booter(loc=255),
               "ValueError: signature patch is outside DMEM image"),
     BundleRow("boundary: the patch ending at the end of DMEM", booter(loc=768 - 384),
               (*VALID[:11], 768 - 384, *VALID[12:])),
     BundleRow("boundary: the patch one past the end of DMEM", booter(loc=768 - 383),
               "ValueError: signature patch is outside DMEM image"),
+    BundleRow("boundary: DMEM ending past the image",
+              booter(header=(*HEADER[:2], 256, 1024, *HEADER[4:])),
+              "ValueError: signature patch is outside DMEM image"),
+    BundleRow("corner: the code range past the image",
+              booter(header=(0, 1280, *HEADER[2:])),
+              "ValueError: invalid Falcon transfer range"),
+    BundleRow("corner: the app range past the image",
+              booter(header=(*HEADER[:6], 512, 0, 0)),
+              "ValueError: invalid Falcon transfer range"),
     BundleRow("corner: a transfer not 256-byte aligned",
               booter(header=(*HEADER[:5], 640, 384, 0, 0)),
               "ValueError: invalid Falcon transfer range"),
@@ -134,6 +161,72 @@ BUNDLE_ROWS = (
               booter().replace(array("HEADER_PROD", struct.pack("<9I", *HEADER)),
                                array("HEADER_PROD", struct.pack("<8I", *HEADER[:8]))),
               "ValueError: unexpected BooterLoad record size"),
+)
+
+
+# The GSP boot descriptor: version 5, five ranges each [0, 256) of a
+# 1024-byte image, one application, the image size, no extra field.
+DESC = (5, 0, 256, 0, 256, 0, 0, 0, 0, 256, 0, 256, 0, 256, 1, 0, 0, 0, 0, 1024, 0)
+LOADER = "static BINDATA_LABEL_UCODE_DESC_data = { 0xfd, 0, { 0x0, 0x200, 0x200, 0x100 } };\n"
+BLOBS = sorted((
+    "booter_load_ad102.bin", "booter_load_ga100.bin", "booter_load_ga102.bin",
+    "falcon_loader.bin", "gsp_boot_ad102.bin", "gsp_boot_desc_ad102.bin",
+    "gsp_boot_desc_ga100.bin", "gsp_boot_desc_ga102.bin", "gsp_boot_ga100.bin",
+    "gsp_boot_ga102.bin",
+))
+
+
+def generated(root: Path, desc: bytes, loader: str, junk: bytes) -> None:
+    """The seven generated sources extract_assets reads, under root."""
+    sources = {
+        "BooterLoadUcode_AD102": booter(), "BooterLoadUcode_GA100": booter(),
+        "BooterLoadUcode_GA102": booter(),
+        "GspRmBoot_AD102": array("UCODE_IMAGE_PROD", IMAGE) + array("UCODE_DESC_PROD", desc),
+        "GspRmBoot_GA100": array("UCODE_IMAGE", IMAGE) + array("UCODE_DESC", desc),
+        "GspRmBoot_GA102": array("UCODE_IMAGE_PROD", IMAGE) + array("UCODE_DESC_PROD", desc),
+    }
+    directory = root / "src/nvidia/generated"
+    directory.mkdir(parents=True)
+    for name, text in sources.items():
+        data = (junk if name == "GspRmBoot_GA102" else b"") + text.encode()
+        (directory / f"g_bindata_kgspGetBinArchive{name}.c").write_bytes(data)
+    (directory / "g_bindata_ksec2GetBinArchiveBlUcode_TU102.c").write_text(
+        loader + array("UCODE_IMAGE", IMAGE))
+
+
+class ExtractRow(NamedTuple):
+    description: str
+    desc: tuple[int, ...]
+    expected: object
+    loader: str = LOADER
+    junk: bytes = b""
+
+
+def desc_with(index: int, value: int) -> tuple[int, ...]:
+    return (*DESC[:index], value, *DESC[index + 1:])
+
+
+EXTRACT_ROWS = (
+    ExtractRow("positive: every blob is written", DESC, BLOBS),
+    ExtractRow("negative: descriptor version 4", desc_with(0, 4),
+               "ValueError: unsupported bootloader descriptor"),
+    ExtractRow("negative: descriptor image size is not the image", desc_with(19, 1023),
+               "ValueError: unsupported bootloader descriptor"),
+    ExtractRow("negative: another generic loader", DESC,
+               "ValueError: unsupported generic loader descriptor",
+               loader=LOADER.replace("0xfd", "0xfe")),
+    ExtractRow("boundary: a range ending at the end of the image",
+               desc_with(1, 768), BLOBS),
+    ExtractRow("boundary: a range one byte past the image", desc_with(1, 769),
+               "ValueError: bootloader descriptor range outside image"),
+    ExtractRow("boundary: a descriptor of 80 bytes", DESC[:20],
+               "ValueError: unexpected bootloader descriptor length"),
+    ExtractRow("corner: a range of 0 bytes", desc_with(2, 0),
+               "ValueError: bootloader descriptor range outside image"),
+    ExtractRow("corner: a source that is not ASCII", DESC,
+               "UnicodeDecodeError: 'ascii' codec can't decode byte 0xff in position 0: "
+               "ordinal not in range(128)",
+               junk=b"\xff"),
 )
 
 
@@ -155,6 +248,21 @@ class ExtractBootAssetsTest(unittest.TestCase):
         row = BundleRow("positive: header, image, then signatures", "",
                         (8 + 14 * 4 + 8 + len(IMAGE) + 384, IMAGE, bytes(384)))
         run(self, (row,), lambda _: (len(data), data[72:72 + len(IMAGE)], data[-384:]))
+
+    def test_extract_assets(self) -> None:
+        def check(row: ExtractRow) -> object:
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                desc = struct.pack(f"<{len(row.desc)}I", *row.desc)
+                generated(root / "nvidia", desc, row.loader, row.junk)
+
+                def blobs() -> list[str]:
+                    extract_boot_assets.extract_assets(root / "nvidia", root / "out")
+                    return sorted(path.name for path in (root / "out").iterdir())
+
+                return outcome(blobs)
+
+        run(self, EXTRACT_ROWS, check)
 
 
 if __name__ == "__main__":
