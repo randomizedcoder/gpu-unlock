@@ -27,6 +27,12 @@ lib.mapAttrs (_: toSource) {
     ../firmware
   ];
 
+  # The firmware scripts and their tables.
+  pythonTests = lib.fileset.unions [
+    ../firmware
+    ../tests/firmware
+  ];
+
   # The analysed sources, and the flake and nix/ for nix-lint and
   # shellcheck. tests/ holds the integration runner and the CI scripts.
   analysis = lib.fileset.unions [

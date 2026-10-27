@@ -10,8 +10,8 @@
 #                   device model would otherwise decide conditions in
 #                   the kernel code
 #   flawfinder      C source scanner
-#   ruff            Python lint of firmware/
-#   mypy            strict type check of firmware/
+#   ruff            Python lint of firmware/ and tests/firmware
+#   mypy            strict type check of firmware/ and tests/firmware
 #   shellcheck      the CI and test scripts and the gate's
 #                   nix/analysis/gate.sh
 #   nix-lint        statix + deadnix on flake.nix and nix/
@@ -102,14 +102,15 @@ in
 
   ruff = mkSourceReport "ruff" [ pkgs.ruff ] ''
     ruff check --no-cache --output-format=concise --target-version=py312 \
-      firmware > "$out/report.txt" 2>&1 || true
+      firmware tests/firmware > "$out/report.txt" 2>&1 || true
     ${countLines "^[^ ]+\\.py:[0-9]+:[0-9]+: "}
   '';
 
   # --python-version: the oldest python3 the scripts run on outside Nix.
   mypy = mkSourceReport "mypy" [ pkgs.mypy ] ''
-    printf '%s\n' firmware/*.py > "$out/checked.txt"
-    xargs mypy --strict --python-version 3.12 \
+    printf '%s\n' firmware/*.py tests/firmware/*.py > "$out/checked.txt"
+    # The tables import the scripts and their table helper by module name.
+    MYPYPATH=firmware:tests/firmware xargs mypy --strict --python-version 3.12 \
       --no-incremental --cache-dir=/dev/null --no-error-summary \
       < "$out/checked.txt" > "$out/report.txt" 2>&1 || true
     ${countLines "^[^ ]+\\.py:[0-9]+: error:"}
