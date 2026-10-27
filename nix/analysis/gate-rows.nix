@@ -34,8 +34,6 @@ in
   (none "sparse" "sparse: allocation flags passed as gfp_t"
     "incorrect type in argument [0-9]+ \\(different base types\\)"
   )
-  # A sourced /etc/os-release is a file shellcheck cannot follow.
-  (none "shellcheck" "shellcheck: no os-release sourced that it cannot follow" "\\[SC1091\\]")
   (none "shellcheck" "shellcheck: CI and test scripts clean" "\\[SC[0-9]+\\]")
   # Linux kernel coding style, as checkpatch reads it.
   (none "checkpatch" "checkpatch: no ERRORs" ": ERROR:")
@@ -50,6 +48,8 @@ in
   (none "cppcheck" "cppcheck: no unknown macros (main.c is analysed)" "\\[unknownMacro\\]")
   (none "cppcheck" "cppcheck: variables declared in the scope that uses them" "\\[variableScope\\]")
   (none "cppcheck" "cppcheck: no parameter shadows a file-scope variable" "\\[shadowVariable\\]")
+  (none "cppcheck" "cppcheck: no value stored and never read" "\\[unreadVariable\\]")
+  (none "cppcheck" "cppcheck: read-only parameters are const" "\\[constParameterPointer\\]")
   (atLeast 1 "cppcheck" "checked.txt" "cppcheck: main.c is in the kernel run"
     "^Checking kernel/gpu_unlock/main\\.c "
   )
