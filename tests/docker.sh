@@ -19,7 +19,8 @@ commit=$(packaging/snapshot.sh)
 	ubuntu:26.04 fedora:43 fedora:latest archlinux:latest
 
 # The same setup as the CI jobs. The job runs on a clone so that nothing
-# in the checkout ends up owned by root.
+# in the checkout ends up owned by root. The container's sh expands it.
+# shellcheck disable=SC2016
 script='
 ID=$(sh /src/.github/ci/os-release.sh ID)
 case "$ID" in

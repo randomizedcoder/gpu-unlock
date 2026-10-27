@@ -36,6 +36,7 @@ in
   )
   # A sourced /etc/os-release is a file shellcheck cannot follow.
   (none "shellcheck" "shellcheck: no os-release sourced that it cannot follow" "\\[SC1091\\]")
+  (none "shellcheck" "shellcheck: CI and test scripts clean" "\\[SC[0-9]+\\]")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")
