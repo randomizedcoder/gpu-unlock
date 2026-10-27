@@ -47,6 +47,8 @@ in
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")
   (none "cppcheck" "cppcheck: no unknown macros (main.c is analysed)" "\\[unknownMacro\\]")
+  (none "cppcheck" "cppcheck: variables declared in the scope that uses them" "\\[variableScope\\]")
+  (none "cppcheck" "cppcheck: no parameter shadows a file-scope variable" "\\[shadowVariable\\]")
   (atLeast 1 "cppcheck" "checked.txt" "cppcheck: main.c is in the kernel run"
     "^Checking kernel/gpu_unlock/main\\.c "
   )

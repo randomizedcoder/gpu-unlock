@@ -73,7 +73,6 @@ int gpu_unlock_elf_section(const u8 *elf, size_t length, const char *name,
 {
 	u64 shoff;
 	u16 shentsize, shnum, shstrndx, i;
-	u32 name_off;
 	const u8 *shstr;
 	u64 shstr_off, shstr_size;
 	bool found = false;
@@ -103,8 +102,8 @@ int gpu_unlock_elf_section(const u8 *elf, size_t length, const char *name,
 		u64 off = rd64(sh + 24);
 		u64 size = rd64(sh + 32);
 		size_t namelen = strlen(name);
+		u32 name_off = rd32(sh);
 
-		name_off = rd32(sh);
 		if ((u64)name_off >= shstr_size)
 			return GU_DIAG(-EINVAL);
 		if (!memchr(shstr + name_off, 0, shstr_size - name_off))

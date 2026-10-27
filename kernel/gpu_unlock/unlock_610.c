@@ -847,7 +847,6 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		ret = -EIO;
 	if (!ret) {
 		u64 frts_end = work->layout.frts_offset + work->frts_size;
-		u32 booter_hi;
 
 		/* FWSEC publishes the inclusive 4 KiB end; the Booter decodes
 		 * WPR2_ADDR_HI with a 128 KiB alignment term. Store the Booter
@@ -856,7 +855,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		if (frts_end < GU_WPR2_ALIGN || (frts_end & (GU_WPR2_ALIGN - 1))) {
 			ret = -EINVAL;
 		} else {
-			booter_hi = (u32)(((frts_end - GU_WPR2_ALIGN) >> 12) << 4);
+			u32 booter_hi = (u32)(((frts_end - GU_WPR2_ALIGN) >> 12) << 4);
+
 			dev_dbg(&work->pdev->dev,
 				"FWSEC WPR2 restore encoding: raw_hi=%#x booter_hi=%#x frts_end=%#llx\n",
 				wpr_hi, booter_hi, (unsigned long long)frts_end);

@@ -66,7 +66,6 @@ static int expansion(const u8 *rom, size_t length, u32 *adjust)
 	for (;;) {
 		u64 pcir, npde;
 		u32 bytes, last, sig;
-		u16 ext_rev, ext_len;
 
 		if (++images > 8 || range(length, pos, 0x1a) || !rom_signature(r16(rom + pos)))
 			return GU_DIAG(-EINVAL);
@@ -80,6 +79,8 @@ static int expansion(const u8 *rom, size_t length, u32 *adjust)
 		last = rom[pcir + 0x15] & 0x80;
 		npde = (pcir + r16(rom + pcir + 0x0a) + 15) & ~(u64)15;
 		if (!range(length, npde, 4) && r32(rom + npde) == 0x4544504e) {
+			u16 ext_rev, ext_len;
+
 			if (range(length, npde, 10))
 				return GU_DIAG(-EINVAL);
 			ext_rev = r16(rom + npde + 4);
