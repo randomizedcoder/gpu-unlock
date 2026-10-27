@@ -28,6 +28,9 @@ in
 [
   # gfp_t, pci_power_t and the other __bitwise types are only visible
   # to sparse.
+  (none "sparse" "sparse: PMCSR state not compared with pci_power_t"
+    "restricted pci_power_t degrades to integer"
+  )
   (none "sparse" "sparse: allocation flags passed as gfp_t"
     "incorrect type in argument [0-9]+ \\(different base types\\)"
   )
