@@ -44,12 +44,13 @@ static void test_check(void)
 		  PAYLOAD(4, 0, 0, NULL, 0), 0 },
 		{ "boundary: value slot in the last dword", PAYLOAD(16, 12, 4, word8, 1), 0 },
 		{ "boundary: value slot one byte past the last dword", PAYLOAD(16, 13, 4, word8, 1), -EINVAL },
-		{ "boundary: address slot at the end", PAYLOAD(16, 0, 16, word8, 1), -EINVAL },
+		{ "boundary: address slot in the last dword", PAYLOAD(16, 0, 12, word8, 1), 0 },
+		{ "boundary: address slot one byte past the last dword", PAYLOAD(16, 0, 13, word8, 1), -EINVAL },
 		{ "boundary: baked word in the last dword", PAYLOAD(16, 0, 4, word12, 1), 0 },
 		{ "boundary: baked word one byte past the last dword", PAYLOAD(16, 0, 4, word13, 1), -EINVAL },
 		{ "corner: size not a whole number of dwords", PAYLOAD(18, 0, 4, word8, 1), -EINVAL },
 		{ "corner: size below one dword", PAYLOAD(2, 0, 0, NULL, 0), -EINVAL },
-		{ "corner: an offset that wraps when 4 is added", PAYLOAD(16, ~0u, 4, word8, 1), -EINVAL },
+		{ "corner: the largest offset, 0xffffffff", PAYLOAD(16, ~0u, 4, word8, 1), -EINVAL },
 	};
 	size_t i;
 
@@ -85,7 +86,8 @@ static void test_build(void)
 	table_hex(SUITE_BUILD, "boundary: nothing written past size", CANARY, image[16]);
 	table_hex(SUITE_BUILD, "corner: little-endian, low address byte first", 0x04, image[4]);
 
-	gu_payload_build(&overlap, image, 0x823804, 0x22222222);
+	table_err(SUITE_BUILD, "corner: a baked word under the value slot still builds", 0,
+		  gu_payload_build(&overlap, image, 0x823804, 0x22222222));
 	table_hex(SUITE_BUILD, "corner: the value slot wins over a baked word at its offset",
 		  0x22222222, read_word(image, 0));
 
