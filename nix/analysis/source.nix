@@ -102,13 +102,13 @@ in
 
   ruff = mkSourceReport "ruff" [ pkgs.ruff ] ''
     ruff check --no-cache --output-format=concise --target-version=py312 \
-      firmware tests/firmware > "$out/report.txt" 2>&1 || true
+      firmware tests > "$out/report.txt" 2>&1 || true
     ${countLines "^[^ ]+\\.py:[0-9]+:[0-9]+: "}
   '';
 
   # --python-version: the oldest python3 the scripts run on outside Nix.
   mypy = mkSourceReport "mypy" [ pkgs.mypy ] ''
-    printf '%s\n' firmware/*.py tests/firmware/*.py > "$out/checked.txt"
+    printf '%s\n' firmware/*.py tests/firmware/*.py tests/integration/*.py > "$out/checked.txt"
     # The tables import the scripts and their table helper by module name.
     MYPYPATH=firmware:tests/firmware xargs mypy --strict --python-version 3.12 \
       --no-incremental --cache-dir=/dev/null --no-error-summary \

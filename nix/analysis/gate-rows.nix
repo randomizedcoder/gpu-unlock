@@ -41,7 +41,7 @@ in
   (none "checkpatch" "checkpatch: no LINE_SPACING" ": WARNING:LINE_SPACING:")
   (none "checkpatch" "checkpatch: no LEADING_SPACE" ": WARNING:LEADING_SPACE:")
   (none "checkpatch" "checkpatch: no SPACE_BEFORE_TAB" ": WARNING:SPACE_BEFORE_TAB:")
-  (none "ruff" "ruff: Python in firmware/ and tests/firmware is clean" "^[^ ]+\\.py:[0-9]+:[0-9]+: ")
+  (none "ruff" "ruff: Python in firmware/ and tests/ is clean" "^[^ ]+\\.py:[0-9]+:[0-9]+: ")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")
@@ -62,9 +62,10 @@ in
   (atLeast 4 "mypy" "checked.txt" "mypy: checked the firmware tables"
     "^tests/firmware/[a-z_0-9]+\\.py$"
   )
-  (none "mypy" "mypy: firmware/ and tests/firmware type-check under --strict"
-    "^[^ ]+\\.py:[0-9]+: error:"
+  (atLeast 8 "mypy" "checked.txt" "mypy: checked the integration harness"
+    "^tests/integration/[a-z_0-9]+\\.py$"
   )
+  (none "mypy" "mypy: firmware/ and tests/ type-check under --strict" "^[^ ]+\\.py:[0-9]+: error:")
 ]
 # The 0 rows above only mean something if the tools ran. A failed
 # kbuild leaves an empty report, so each kbuild run must finish and
