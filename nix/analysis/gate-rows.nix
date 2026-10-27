@@ -34,8 +34,6 @@ in
   (none "sparse" "sparse: allocation flags passed as gfp_t"
     "incorrect type in argument [0-9]+ \\(different base types\\)"
   )
-  # A sourced /etc/os-release is a file shellcheck cannot follow.
-  (none "shellcheck" "shellcheck: no os-release sourced that it cannot follow" "\\[SC1091\\]")
   (none "shellcheck" "shellcheck: CI and test scripts clean" "\\[SC[0-9]+\\]")
   # Linux kernel coding style, as checkpatch reads it.
   (none "checkpatch" "checkpatch: no ERRORs" ": ERROR:")
@@ -43,13 +41,15 @@ in
   (none "checkpatch" "checkpatch: no LINE_SPACING" ": WARNING:LINE_SPACING:")
   (none "checkpatch" "checkpatch: no LEADING_SPACE" ": WARNING:LEADING_SPACE:")
   (none "checkpatch" "checkpatch: no SPACE_BEFORE_TAB" ": WARNING:SPACE_BEFORE_TAB:")
-  (none "ruff" "ruff: Python in firmware/ and tests/firmware is clean" "^[^ ]+\\.py:[0-9]+:[0-9]+: ")
+  (none "ruff" "ruff: Python in firmware/ and tests/ is clean" "^[^ ]+\\.py:[0-9]+:[0-9]+: ")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")
   (none "cppcheck" "cppcheck: no unknown macros (main.c is analysed)" "\\[unknownMacro\\]")
   (none "cppcheck" "cppcheck: variables declared in the scope that uses them" "\\[variableScope\\]")
   (none "cppcheck" "cppcheck: no parameter shadows a file-scope variable" "\\[shadowVariable\\]")
+  (none "cppcheck" "cppcheck: no value stored and never read" "\\[unreadVariable\\]")
+  (none "cppcheck" "cppcheck: read-only parameters are const" "\\[constParameterPointer\\]")
   (atLeast 1 "cppcheck" "checked.txt" "cppcheck: main.c is in the kernel run"
     "^Checking kernel/gpu_unlock/main\\.c "
   )
@@ -62,9 +62,10 @@ in
   (atLeast 4 "mypy" "checked.txt" "mypy: checked the firmware tables"
     "^tests/firmware/[a-z_0-9]+\\.py$"
   )
-  (none "mypy" "mypy: firmware/ and tests/firmware type-check under --strict"
-    "^[^ ]+\\.py:[0-9]+: error:"
+  (atLeast 8 "mypy" "checked.txt" "mypy: checked the integration harness"
+    "^tests/integration/[a-z_0-9]+\\.py$"
   )
+  (none "mypy" "mypy: firmware/ and tests/ type-check under --strict" "^[^ ]+\\.py:[0-9]+: error:")
 ]
 # The 0 rows above only mean something if the tools ran. A failed
 # kbuild leaves an empty report, so each kbuild run must finish and

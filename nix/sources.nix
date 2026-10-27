@@ -33,6 +33,12 @@ lib.mapAttrs (_: toSource) {
     ../tests/firmware
   ];
 
+  # The host unit tests and the kernel helpers they link.
+  unitTests = lib.fileset.unions [
+    ../kernel
+    ../tests/unit
+  ];
+
   # The analysed sources, and the flake and nix/ for nix-lint and
   # shellcheck. tests/ holds the integration runner and the CI scripts.
   analysis = lib.fileset.unions [

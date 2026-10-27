@@ -10,7 +10,8 @@ import ctypes as C
 import struct
 from pathlib import Path
 
-from emulator.falcon_emu.decode import _decode
+# emulator/ is an out-of-tree checkout at the repository root (README.md).
+from emulator.falcon_emu.decode import _decode  # type: ignore[import-not-found]
 
 OPS = {
     "fallback": 0, "mov": 1, "sethi": 2, "add": 3, "adc": 4, "sub": 5,

@@ -9,6 +9,7 @@ Each row prints as the Nix tables and the analysis gate do:
 from __future__ import annotations
 
 import unittest
+import zlib
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
@@ -22,10 +23,14 @@ class Row(Protocol):
 
 
 def outcome(call: Callable[[], object]) -> object:
-    """What call returns, or the message of the ValueError or OSError it raises."""
+    """What call returns, or the message of the error it raises.
+
+    The errors are those the scripts' main() reports: OSError, ValueError
+    and zlib.error.
+    """
     try:
         return call()
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, zlib.error) as error:
         return f"{type(error).__name__}: {error}"
 
 

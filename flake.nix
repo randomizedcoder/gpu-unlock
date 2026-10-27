@@ -7,13 +7,15 @@
 #   nix build .#firmware              the generated firmware (fetches the
 #                                     pinned NVIDIA inputs, ~340 MB)
 #   nix flake check                   module build (-Werror), the
-#                                     analysis gate, the firmware files
-#                                     and the NixOS module tests
-#                                     (nix/tests)
+#                                     analysis gate, the firmware files,
+#                                     the unit tests and the NixOS
+#                                     module tests (nix/tests)
 #   nix develop                       build/test/analysis shell
 #   nix build .#analysis-quick        static analysis, see nix/analysis
 #   nix build .#analysis-standard
 #   nix build .#analysis-deep
+#
+# Other flakes: overlays.default adds pkgs.gpu-unlock (the package scope).
 #
 # NixOS: import nixosModules.default and set
 #
@@ -47,8 +49,6 @@
         default = kernelModule;
         kernel-module = kernelModule;
         inherit (scope) firmware;
-        nvidia-kernel-module-source = scope.inputs.kernelModuleSource;
-        nvidia-installer = scope.inputs.installer;
       }
       // lib.mapAttrs' (name: lib.nameValuePair "analysis-${name}") (
         lib.filterAttrs (_: lib.isDerivation) analysis
@@ -60,13 +60,14 @@
         firmware-files = scope.callPackage ./nix/tests/firmware-files.nix { };
         os-release = scope.callPackage ./nix/tests/os-release.nix { };
         python-tests = scope.callPackage ./nix/tests/python.nix { };
+        unit-tests = scope.callPackage ./nix/tests/unit.nix { };
         eval-tests = scope.callPackage ./nix/tests/table.nix { } "eval-tests" (
           scope.callPackage ./nix/tests/module.nix {
             inherit (nixpkgs.lib) nixosSystem;
             module = self.nixosModules.default;
           }
           ++ scope.callPackage ./nix/tests/sources.nix { }
-          ++ scope.callPackage ./nix/tests/wiring.nix { }
+          ++ scope.callPackage ./nix/tests/wiring.nix { overlay = self.overlays.default; }
           ++ scope.callPackage ./nix/tests/inputs.nix { }
         );
       };
@@ -74,6 +75,11 @@
       devShells.${system}.default = scope.devShell;
 
       nixosModules.default = ./nix/nixos-module.nix;
+
+      # pkgs.gpu-unlock: the scope of nix/packages.nix, built from the
+      # consumer's nixpkgs. Override its kernel with
+      # pkgs.gpu-unlock.overrideScope (_: _: { kernelPackages = ...; }).
+      overlays.default = final: _: { gpu-unlock = final.callPackage ./nix/packages.nix { }; };
 
       formatter.${system} = pkgs.nixfmt-tree;
     };

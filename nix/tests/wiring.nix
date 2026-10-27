@@ -14,15 +14,12 @@
   kernelModule,
   analysis,
   devShell,
+  firmware,
+  overlay,
 }:
 
 let
-  kbuildNames = [
-    "gcc-warnings"
-    "gcc-analyzer"
-    "sparse"
-    "smatch"
-  ];
+  inherit (analysis) kbuildNames;
 
   # An attribute that is not there yet is a failed row, not an
   # evaluation error: tryEval only catches throws.
@@ -81,6 +78,16 @@ map (name: {
   {
     description = "wiring, positive: the dev shell disables the module's hardening";
     actual = devShell.hardeningDisable == kernelModule.hardeningDisable;
+    expected = true;
+  }
+  {
+    description = "wiring, positive: the overlay builds the same module as the flake";
+    actual = (pkgs.extend overlay).gpu-unlock.kernelModule.drvPath == kernelModule.drvPath;
+    expected = true;
+  }
+  {
+    description = "wiring, positive: the NVIDIA installer is reachable from the firmware";
+    actual = lib.hasSuffix ".run" (need firmware "inputs").installer.name;
     expected = true;
   }
   {

@@ -22,6 +22,7 @@ let
   gitattributes = read ../../.gitattributes;
 
   lines = text: lib.splitString "\n" text;
+  make = import ../make-var.nix { inherit lib; };
 
   # Every whole run of lowercase hex digits that is a SHA-256, so a
   # longer run or a prefix does not count as one.
@@ -31,18 +32,10 @@ let
       map builtins.head (lib.filter builtins.isList (builtins.split "([0-9a-f]+)" text))
     );
 
-  # `NAME := value` from a Makefile text, as written.
-  makeRaw =
-    text: name:
-    builtins.head (
-      lib.findFirst (m: m != null) (throw "Makefile has no ${name}") (
-        map (builtins.match "${name}[[:space:]]*:=[[:space:]]*(.*)") (lines text)
-      )
-    );
-
-  # The same with $(NV) expanded.
+  # `NAME := value` from a Makefile text, with $(NV) expanded.
   makeVar =
-    text: name: builtins.replaceStrings [ "$(NV)" ] [ (makeRaw text "NV") ] (makeRaw text name);
+    text: name:
+    builtins.replaceStrings [ "$(NV)" ] [ (make.makeVar text "NV") ] (make.makeVar text name);
 
   # `SourceN: url` from the spec, with %{nv} expanded.
   specSource =
@@ -65,7 +58,20 @@ let
   # The same hash with its last digit changed.
   editedHash = lib.substring 0 63 sourceHash + (if lib.hasSuffix "0" sourceHash then "1" else "0");
 
-  attribute = line: lib.elem line (lines gitattributes);
+  attribute = text: line: lib.elem line (lines text);
+
+  # What the flake reads: itself, the trees nix/sources.nix builds from,
+  # and .gitattributes for these rows. A github: input that lacks one of
+  # them fails to evaluate.
+  flakeTrees = [
+    "/flake.nix"
+    "/flake.lock"
+    "/nix"
+    "/tests"
+    "/.github"
+    "/.gitattributes"
+  ];
+  keepsFlake = text: lib.all (path: attribute text "${path} -export-ignore") flakeTrees;
 in
 [
   {
@@ -135,17 +141,18 @@ in
     actual = hashesIn "'${sourceHash}'";
   }
   {
-    description = "inputs, corner: .gitattributes keeps the flake in GitHub tarballs";
+    description = "inputs, corner: .gitattributes keeps the flake and its sources in GitHub tarballs";
     expected = true;
-    actual = lib.all attribute [
-      "/flake.nix -export-ignore"
-      "/flake.lock -export-ignore"
-      "/nix -export-ignore"
-    ];
+    actual = keepsFlake gitattributes;
+  }
+  {
+    description = "inputs, negative: a .gitattributes that leaves tests/ out loses the flake";
+    expected = false;
+    actual = keepsFlake (builtins.replaceStrings [ "/tests -export-ignore" ] [ "" ] gitattributes);
   }
   {
     description = "inputs, corner: .gitattributes still leaves *.bin out";
     expected = true;
-    actual = attribute "*.bin export-ignore";
+    actual = attribute gitattributes "*.bin export-ignore";
   }
 ]

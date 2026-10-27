@@ -172,7 +172,7 @@ static int read_bar(struct unlock_transaction_work *work, u32 offset, u32 *value
 	return 0;
 }
 
-static void write_bar(struct unlock_transaction_work *work, u32 offset, u32 value)
+static void write_bar(const struct unlock_transaction_work *work, u32 offset, u32 value)
 {
 	writel(value, work->bar + offset);
 }
@@ -879,11 +879,11 @@ out:
 static int unlock_transaction_gfw(struct unlock_transaction_work *work)
 {
 	ktime_t deadline = ktime_add_us(ktime_get(), GU_GFW_TIMEOUT_US);
-	int assessed = -EAGAIN;
 
 	for (;;) {
 		struct gpu_unlock_gfw_sample sample = { };
 		u16 vendor = 0xffff;
+		int assessed;
 
 		if (read_bar(work, GU_GFW_PLM_OFFSET, &sample.plm) ||
 		    read_bar(work, GU_GFW_BOOT_OFFSET, &sample.boot) ||
