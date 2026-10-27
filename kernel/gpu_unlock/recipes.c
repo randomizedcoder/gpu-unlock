@@ -5,7 +5,8 @@
 /* GA102 re-entrant V67 call table. The Booter dispatches the frame RET into
  * these gadgets and performs the privileged write from the value/address
  * slots, so one invocation applies one table entry. Offsets are relative to
- * the signature image, not to BAR0. */
+ * the signature image, not to BAR0.
+ */
 static const struct gu_payload_word ga102_v67_words[] = {
 	{ 0x1100, 0x00000007 },
 	{ 0xf950, 0x00000d44 },
@@ -38,7 +39,8 @@ static const struct gu_payload_word ga102_v67_words[] = {
 
 static const struct gu_payload ga102_v67 = GU_PAYLOAD_V67("ga102-v67");
 /* No payload has been derived for the GA100 or AD102 signed Booter yet; both
- * reuse the GA102 V67 body until one is. Replace the descriptor when it lands. */
+ * reuse the GA102 V67 body until one is. Replace the descriptor when it lands.
+ */
 static const struct gu_payload ga100_v67 = GU_PAYLOAD_V67("ga100-v67");
 static const struct gu_payload ad102_v67 = GU_PAYLOAD_V67("ad102-v67");
 
