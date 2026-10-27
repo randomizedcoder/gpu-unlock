@@ -23,8 +23,8 @@ def payload_offset(installer: Path) -> int:
     """Offset of the makeself payload after its shell header."""
     with installer.open("rb") as stream:
         header = stream.read(HEADER_BYTES)
-    version = re.search(rb"^version_string=([0-9.]+)$", header, re.M)
-    skip = re.search(rb"^skip=(\d+)$", header, re.M)
+    version = re.search(rb"^version_string=([0-9.]+)$", header, re.MULTILINE)
+    skip = re.search(rb"^skip=(\d+)$", header, re.MULTILINE)
     if not version or not skip:
         raise ValueError("not an NVIDIA makeself installer")
     if version[1].decode() != VERSION:
