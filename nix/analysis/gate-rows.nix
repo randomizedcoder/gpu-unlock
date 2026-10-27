@@ -37,6 +37,12 @@ in
   # A sourced /etc/os-release is a file shellcheck cannot follow.
   (none "shellcheck" "shellcheck: no os-release sourced that it cannot follow" "\\[SC1091\\]")
   (none "shellcheck" "shellcheck: CI and test scripts clean" "\\[SC[0-9]+\\]")
+  # Linux kernel coding style, as checkpatch reads it.
+  (none "checkpatch" "checkpatch: no ERRORs" ": ERROR:")
+  (none "checkpatch" "checkpatch: no ARRAY_SIZE" ": WARNING:ARRAY_SIZE:")
+  (none "checkpatch" "checkpatch: no LINE_SPACING" ": WARNING:LINE_SPACING:")
+  (none "checkpatch" "checkpatch: no LEADING_SPACE" ": WARNING:LEADING_SPACE:")
+  (none "checkpatch" "checkpatch: no SPACE_BEFORE_TAB" ": WARNING:SPACE_BEFORE_TAB:")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")

@@ -168,7 +168,7 @@ int gpu_unlock_boot_desc_parse(const u8 *data, size_t size, u32 image_size,
 	    rd32(data) != 5 || rd32(data + 56) != 1 ||
 	    rd32(data + 76) != image_size || rd32(data + 80))
 		return GU_DIAG(-EINVAL);
-	for (i = 0; i < sizeof(ranges) / sizeof(ranges[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(ranges); i++) {
 		u32 off = rd32(data + ranges[i] * 4);
 		u32 len = rd32(data + (ranges[i] + 1) * 4);
 

@@ -37,9 +37,11 @@ static struct pci_dev *next_supported(struct pci_dev *from, const struct gu_card
 {
 	struct pci_dev *pdev = from;
 
-	while ((pdev = pci_get_device(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID, pdev)))
-		if ((*recipe = gu_card_find(pdev->device)))
+	while ((pdev = pci_get_device(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID, pdev))) {
+		*recipe = gu_card_find(pdev->device);
+		if (*recipe)
 			return pdev;
+	}
 	return NULL;
 }
 
