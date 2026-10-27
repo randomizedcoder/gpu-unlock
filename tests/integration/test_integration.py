@@ -9,8 +9,10 @@ is still asserted.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 from . import build, hooks
 from .run import load_runner, run_transaction
@@ -21,7 +23,8 @@ FAILURES: list[str] = []
 CHECKS = 0
 
 
-def check(condition, message, detail=None, fail=None):
+def check(condition: object, message: str, detail: str | None = None,
+          fail: str | None = None) -> None:
     global CHECKS
 
     CHECKS += 1
@@ -36,7 +39,7 @@ def check(condition, message, detail=None, fail=None):
 
 
 @contextmanager
-def section(title):
+def section(title: str) -> Iterator[None]:
     print(f"\n== {title} ==")
     checks = CHECKS
     failures = len(FAILURES)
@@ -46,7 +49,7 @@ def section(title):
           f"{len(FAILURES) - failures} failures")
 
 
-def report(record, label):
+def report(record: dict[str, Any], label: str) -> None:
     print(f"[{label}] driver={record['driver_result']} stage={record['stage']} "
           f"launches={record['launches']} unlocked={record['unlock_verified']}")
     print(f"    fwsec={record['fwsec_executed']} mac={record['fwsec_mac_ok']} "
@@ -55,7 +58,7 @@ def report(record, label):
           f"status={record['booter_status']} reset_plm={record['booter_reset_plm']:#x}")
 
 
-def main():
+def main() -> int:
     print("gpu-unlock integration tests")
     print("driver diagnostics: off (set GPU_UNLOCK_DIAG=1 to show them)")
     RUNS.mkdir(parents=True, exist_ok=True)

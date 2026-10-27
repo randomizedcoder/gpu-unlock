@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import tempfile
 import urllib.request
+from pathlib import Path
 
 INPUTS = (
     {
@@ -23,7 +23,7 @@ INPUTS = (
 )
 
 
-def fetch(entry: dict, output: Path, offline: bool = False) -> Path:
+def fetch(entry: dict[str, str], output: Path, offline: bool = False) -> Path:
     output.mkdir(parents=True, exist_ok=True)
     destination = output / entry["filename"]
     if destination.exists():

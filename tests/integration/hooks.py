@@ -12,6 +12,7 @@ import re
 import sys
 import tomllib
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -23,10 +24,13 @@ DEVICE = HERE / "device" / "gd.c"
 COMPILED_HOOKS = {0x404, 0x700}
 
 
-def inventory():
+Row = tuple[int, int, int]
+
+
+def inventory() -> tuple[dict[str, list[Row]], list[tuple[str, dict[str, Any]]]]:
     with TOML.open("rb") as file:
         data = tomllib.load(file)
-    rows = {"bar0": [], "io": []}
+    rows: dict[str, list[Row]] = {"bar0": [], "io": []}
     special = []
     for name, reg in data.get("reg", {}).items():
         space = reg.get("space", "io")
@@ -35,14 +39,14 @@ def inventory():
                  "write_levels", "flr_reset", "denied_read", "host", "io"}
         if set(reg) - known:
             special.append((name, reg))
-    for space in rows:
-        rows[space].sort()
+    for entries in rows.values():
+        entries.sort()
     return rows, special
 
 
-def header_rows(space: str):
+def header_rows(space: str) -> list[Row]:
     text = HEADER.read_text()
-    start = text.index("gd_%s_defaults[]" % space)
+    start = text.index(f"gd_{space}_defaults[]")
     body = text[start:text.index("};", start)]
     return [(int(a, 16), int(v, 16), int(m, 16))
             for a, v, m in re.findall(r"\{ 0x([0-9a-f]+)u, 0x([0-9a-f]+)u, 0x([0-9a-f]+)u \}", body)]
@@ -59,7 +63,7 @@ def check() -> list[str]:
         failures.append(f"TOML hooks {sorted(addresses)} != compiled {sorted(COMPILED_HOOKS)}")
     device = DEVICE.read_text()
     for address in sorted(COMPILED_HOOKS):
-        if "0x%x" % address not in device:
+        if f"0x{address:x}" not in device:
             failures.append(f"compiled hook 0x{address:x} missing from gd.c")
     return failures
 

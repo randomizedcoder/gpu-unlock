@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from . import assets
 
 
-def prepare(family: str, run_dir: Path) -> dict:
+def prepare(family: str, run_dir: Path) -> dict[str, Any]:
     manifest = assets.prepare_run(family, run_dir)
     manifest["rom_sha256"] = __import__("hashlib").sha256(
         (Path(run_dir) / "rom.bin").read_bytes()).hexdigest()

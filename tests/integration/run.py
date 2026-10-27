@@ -7,6 +7,7 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 from . import assets, build, codetable, inputs
 
@@ -74,7 +75,7 @@ class Result(C.Structure):
     ]
 
 
-def load_runner(library: Path):
+def load_runner(library: Path) -> C.CDLL:
     lib = C.CDLL(str(library))
     lib.gd_run_transaction.argtypes = [
         C.c_uint16, C.c_uint32, C.c_char_p, C.c_char_p, C.c_char_p, C.c_char_p,
@@ -85,7 +86,8 @@ def load_runner(library: Path):
     return lib
 
 
-def as_dict(family: str, manifest: dict, result: Result, elapsed: float) -> dict:
+def as_dict(family: str, manifest: dict[str, Any], result: Result,
+            elapsed: float) -> dict[str, Any]:
     return {
         "family": family,
         "run_dir": manifest.get("run_dir"),
@@ -148,7 +150,7 @@ def as_dict(family: str, manifest: dict, result: Result, elapsed: float) -> dict
 
 def run_transaction(family: str, run_dir: Path, *,
                     threads: bool = False, verbose: bool = False,
-                    library: Path | None = None) -> dict:
+                    library: Path | None = None) -> dict[str, Any]:
     run_dir = Path(run_dir)
     manifest = inputs.prepare(family, run_dir)
     library = Path(library) if library else build.build()
@@ -196,7 +198,7 @@ STAGES = {
 }
 
 
-def decode_trace(binary: Path, text: Path):
+def decode_trace(binary: Path, text: Path) -> None:
     data = Path(binary).read_bytes()
     if len(data) < 4:
         return

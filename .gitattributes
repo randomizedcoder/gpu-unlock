@@ -11,3 +11,9 @@
 *.rom export-ignore
 *.cu export-ignore
 /debian -export-ignore
+/flake.nix -export-ignore
+/flake.lock -export-ignore
+/nix -export-ignore
+/tests -export-ignore
+/.github -export-ignore
+/.gitattributes -export-ignore

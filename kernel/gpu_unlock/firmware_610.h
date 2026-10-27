@@ -9,7 +9,8 @@
 struct firmware;
 
 /* Immutable after preparation, including decoded metadata. Owns gsp and boot.
- * key is the family file set this slot was claimed for. */
+ * key is the family file set this slot was claimed for.
+ */
 struct gpu_unlock_610_firmware {
 	const struct gu_fw_desc *key;
 	const struct firmware *gsp, *boot;
@@ -31,7 +32,8 @@ struct gpu_unlock_610_booter {
 #define GU_SHARED_BOOTERS 3
 
 /* One coordination round. Bundles and Booters are interned by descriptor
- * pointer, so families that share a Booter load it once. */
+ * pointer, so families that share a Booter load it once.
+ */
 struct gpu_unlock_610_shared {
 	struct gpu_unlock_610_firmware bundle[GU_SHARED_BUNDLES];
 	struct gpu_unlock_610_booter booter[GU_SHARED_BOOTERS];
@@ -69,7 +71,8 @@ gpu_unlock_610_booter_find(const struct gpu_unlock_610_shared *shared,
 
 /* Serial preparation only; no workers may run until all calls have returned.
  * Cache failures for this round without invalidating another family's assets.
- * A fresh round starts after release_shared(), including on resume. */
+ * A fresh round starts after release_shared(), including on resume.
+ */
 int gpu_unlock_610_load_shared(const struct gu_device *device, struct gpu_unlock_610_shared *shared);
 void gpu_unlock_610_release_shared(struct gpu_unlock_610_shared *shared);
 

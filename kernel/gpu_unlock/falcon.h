@@ -17,13 +17,15 @@ struct gu_falcon_engine { u32 base, fbif, falcon2; };
 
 /* Reset for every operation, including validation failures. Available on error.
  * started records a submitted start; halted records a successful halt wait.
- * Neither proves firmware-specific success, cleanup or safe DMA disposal. */
+ * Neither proves firmware-specific success, cleanup or safe DMA disposal.
+ */
 struct gu_falcon_evidence {
 	bool reset_asserted, reset_released, reloaded, started, halted;
 };
 
 /* Image spans/firmware geometry are validated by preparation before calling.
- * Transport additionally rejects unrepresentable HS/DMA addresses before reset. */
+ * Transport additionally rejects unrepresentable HS/DMA addresses before reset.
+ */
 struct gu_falcon_hs_image {
 	dma_addr_t dma;
 	u32 code_off, code_size, code_va, code_pa;
@@ -33,7 +35,8 @@ struct gu_falcon_hs_image {
 	u32 sig_dmem, engine_mask, ucode_id;
 	u32 mailbox0, mailbox1;
 	/* The caller verifies the result independently, so HALTED left set
-	 * across reset is tolerated, as RM does. GA102 GSP and SEC2 keep it. */
+	 * across reset is tolerated, as RM does. GA102 GSP and SEC2 keep it.
+	 */
 	bool stale_halt_ok;
 };
 struct gu_falcon_direct_image {

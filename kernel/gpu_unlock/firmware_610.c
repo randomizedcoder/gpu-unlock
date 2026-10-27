@@ -209,7 +209,8 @@ int gpu_unlock_610_load_shared(const struct gu_device *device, struct gpu_unlock
 	pdev = device->pdev;
 	family = device->recipe->family;
 	/* The payload belongs to the Booter image; refuse a pairing the runner
-	 * could not use instead of tearing it apart per card later. */
+	 * could not use instead of tearing it apart per card later.
+	 */
 	if (!family->booter->payload || gu_payload_check(family->booter->payload))
 		return -EINVAL;
 	load = family->fw;

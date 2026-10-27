@@ -14,6 +14,7 @@ import os
 import shutil
 import struct
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 VBIOS = ROOT / "emulator" / "vbios"
@@ -23,7 +24,7 @@ BOOTERS = Path(os.environ.get("GPU_UNLOCK_BOOTERS", Path.home() / "Projects" / "
 PROM_SIZE = 0x100000
 PROM_OFFSET = 0x300000
 
-FAMILIES = {
+FAMILIES: dict[str, dict[str, Any]] = {
     "GA100": {
         "device": 0x20C2,
         "chip": 0x170,
@@ -62,7 +63,7 @@ ASSETS = [
 ]
 
 
-def prepare_rom(family: str, output: Path) -> dict:
+def prepare_rom(family: str, output: Path) -> dict[str, Any]:
     spec = FAMILIES[family]
     data = spec["rom"].read_bytes()
     offset = spec["offset"]
@@ -120,7 +121,7 @@ def _install_debug_booter(family: str, bundle: Path) -> None:
     bundle.write_bytes(data)
 
 
-def prepare_run(family: str, run_dir: Path) -> dict:
+def prepare_run(family: str, run_dir: Path) -> dict[str, Any]:
     run_dir.mkdir(parents=True, exist_ok=True)
     rom = run_dir / "rom.bin"
     manifest = prepare_rom(family, rom)

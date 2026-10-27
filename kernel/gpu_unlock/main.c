@@ -20,7 +20,8 @@ module_param(resume, bool, 0644);
 MODULE_PARM_DESC(resume, "Unlock the cards again after resume from suspend, which powers them off (default: on)");
 
 /* A target card. Those unlocked at boot stay listed, with a reference, to be
- * unlocked again after each resume. */
+ * unlocked again after each resume.
+ */
 struct card {
 	struct list_head node;
 	struct gu_device device;
@@ -30,16 +31,18 @@ struct card {
 
 static LIST_HEAD(cards);
 static ASYNC_DOMAIN_EXCLUSIVE(unlock_domain);
-static struct gpu_unlock_610_shared shared;
+static struct gpu_unlock_610_shared shared_firmware;
 
 /* The next supported NVIDIA card after from, like pci_get_device(). */
 static struct pci_dev *next_supported(struct pci_dev *from, const struct gu_card **recipe)
 {
 	struct pci_dev *pdev = from;
 
-	while ((pdev = pci_get_device(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID, pdev)))
-		if ((*recipe = gu_card_find(pdev->device)))
+	while ((pdev = pci_get_device(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID, pdev))) {
+		*recipe = gu_card_find(pdev->device);
+		if (*recipe)
 			return pdev;
+	}
 	return NULL;
 }
 
@@ -51,7 +54,7 @@ static void unlock_one(void *data, async_cookie_t cookie)
 	int ret;
 
 	pci_dev_lock(pdev);
-	ret = pdev->driver ? -EBUSY : gpu_unlock_610_unlock(&card->device, &shared, false);
+	ret = pdev->driver ? -EBUSY : gpu_unlock_610_unlock(&card->device, &shared_firmware, false);
 	pci_dev_unlock(pdev);
 	if (ret)
 		pci_err(pdev, "gpu_unlock: unlock failed (%d)\n", ret);
@@ -61,7 +64,8 @@ static void unlock_one(void *data, async_cookie_t cookie)
 }
 
 /* After resume, before nvidia resumes the card it suspended. Losing power in
- * suspend to RAM reset the selectors. Runs concurrently for each card. */
+ * suspend to RAM reset the selectors. Runs concurrently for each card.
+ */
 static void unlock_again(void *data, async_cookie_t cookie)
 {
 	struct card *card = data;
@@ -72,7 +76,7 @@ static void unlock_again(void *data, async_cookie_t cookie)
 	pci_dev_lock(pdev);
 	nvidia = pdev->driver && !strcmp(pdev->driver->name, "nvidia");
 	if (nvidia)
-		ret = gpu_unlock_610_unlock(&card->device, &shared, true);
+		ret = gpu_unlock_610_unlock(&card->device, &shared_firmware, true);
 	pci_dev_unlock(pdev);
 	if (!nvidia)
 		pci_info(pdev, "gpu_unlock: not bound to nvidia, left as is after resume\n");
@@ -88,10 +92,10 @@ static void unlock_again(void *data, async_cookie_t cookie)
 static void unlock_cards(async_func_t unlock)
 {
 	struct card *card;
-	int ret;
 
 	list_for_each_entry(card, &cards, node) {
-		ret = gpu_unlock_610_load_shared(&card->device, &shared);
+		int ret = gpu_unlock_610_load_shared(&card->device, &shared_firmware);
+
 		card->prepared = !ret;
 		if (ret)
 			pci_err(card->device.pdev, "gpu_unlock: firmware load failed (%d)\n", ret);
@@ -102,7 +106,7 @@ static void unlock_cards(async_func_t unlock)
 			async_schedule_domain(unlock, card, &unlock_domain);
 	}
 	async_synchronize_full_domain(&unlock_domain);
-	gpu_unlock_610_release_shared(&shared);
+	gpu_unlock_610_release_shared(&shared_firmware);
 }
 
 static void drop_card(struct card *card)
@@ -113,7 +117,8 @@ static void drop_card(struct card *card)
 }
 
 /* nvidia resumes its cards from its own notifier, at the default priority 0,
- * once this returns: every card must be finished by then. */
+ * once this returns: every card must be finished by then.
+ */
 static int gpu_unlock_pm_notify(struct notifier_block *nb, unsigned long event, void *unused)
 {
 	if (event == PM_POST_SUSPEND && resume)
@@ -143,11 +148,11 @@ static void report_unmatched(void)
 {
 	const char *entry, *end;
 	struct card *card;
-	bool matched;
 
 	for (entry = targets; *entry; entry = *end ? end + 1 : end) {
+		bool matched = false;
+
 		end = strchrnul(entry, ',');
-		matched = false;
 		list_for_each_entry(card, &cards, node) {
 			const char *name = pci_name(card->device.pdev);
 

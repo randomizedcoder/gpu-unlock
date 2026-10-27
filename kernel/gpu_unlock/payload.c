@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Signature image construction. The image is data the signed Booter reads, so
- * every offset is validated against the selected descriptor before writing. */
+ * every offset is validated against the selected descriptor before writing.
+ */
 #include "diagnostic.h"
 #ifdef __KERNEL__
 #include <linux/errno.h>
