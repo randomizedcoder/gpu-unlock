@@ -59,6 +59,7 @@
         analysis-gate = analysis.gate;
         firmware-files = scope.callPackage ./nix/tests/firmware-files.nix { };
         os-release = scope.callPackage ./nix/tests/os-release.nix { };
+        python-tests = scope.callPackage ./nix/tests/python.nix { };
         eval-tests = scope.callPackage ./nix/tests/table.nix { } "eval-tests" (
           scope.callPackage ./nix/tests/module.nix {
             inherit (nixpkgs.lib) nixosSystem;

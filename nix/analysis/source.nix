@@ -10,7 +10,7 @@
 #                   device model would otherwise decide conditions in
 #                   the kernel code
 #   flawfinder      C source scanner
-#   ruff            Python lint of firmware/
+#   ruff            Python lint of firmware/ and tests/firmware
 #   mypy            strict type check of firmware/
 #   shellcheck      the CI and test scripts and the gate's
 #                   nix/analysis/gate.sh
@@ -102,7 +102,7 @@ in
 
   ruff = mkSourceReport "ruff" [ pkgs.ruff ] ''
     ruff check --no-cache --output-format=concise --target-version=py312 \
-      firmware > "$out/report.txt" 2>&1 || true
+      firmware tests/firmware > "$out/report.txt" 2>&1 || true
     ${countLines "^[^ ]+\\.py:[0-9]+:[0-9]+: "}
   '';
 
