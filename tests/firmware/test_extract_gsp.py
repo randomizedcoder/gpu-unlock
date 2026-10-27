@@ -104,6 +104,24 @@ MEMBERS_ROWS = (
 )
 
 
+def zstd(data: bytes) -> bytes:
+    return subprocess.run(["zstd", "-qc"], input=data, stdout=subprocess.PIPE,
+                          check=True).stdout
+
+
+class PayloadRow(NamedTuple):
+    description: str
+    payload: bytes
+    expected: object
+
+
+NOT_TAR = "ValueError: installer payload is not a zstd tar archive"
+PAYLOAD_ROWS = (
+    PayloadRow("corner: a payload zstd cannot read", b"not zstd", NOT_TAR),
+    PayloadRow("corner: a zstd payload that is not a tar", zstd(b"not a tar"), NOT_TAR),
+)
+
+
 class ExtractGspTest(unittest.TestCase):
     def setUp(self) -> None:
         self.directory = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -127,6 +145,14 @@ class ExtractGspTest(unittest.TestCase):
             return outcome(sizes)
 
         run(self, MEMBERS_ROWS, check)
+
+    def test_unreadable_payload(self) -> None:
+        def check(row: PayloadRow) -> object:
+            path = self.directory / "installer.run"
+            path.write_bytes(header() + row.payload)
+            return outcome(lambda: extract_gsp.extract_members(path, WANTED))
+
+        run(self, PAYLOAD_ROWS, check)
 
 
 if __name__ == "__main__":
