@@ -19,11 +19,12 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-extern int table_failed;
+extern int table_rows, table_failed;
 
 static inline void table_report(const char *suite, const char *description,
 				bool pass, const char *expected, const char *got)
 {
+	table_rows++;
 	if (!pass)
 		table_failed++;
 	printf("%s  %s, %s  (expected %s, got %s)\n", pass ? "PASS" : "FAIL",
