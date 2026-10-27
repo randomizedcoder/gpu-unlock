@@ -20,7 +20,8 @@ struct gu_reg_write { u32 addr, value; };
 struct gu_write_table { const struct gu_reg_write *entries; size_t count; };
 
 /* Header fields that differ between signed Booter images. The common checks
- * stay in the validator. */
+ * stay in the validator.
+ */
 struct gu_booter_expect {
 	u32 image_size, num_sigs, sig_bytes;
 	u32 os_data_off, os_data_size, app_code_size, patch_loc;
@@ -34,7 +35,8 @@ enum gu_sec2_launch {
 /* One signed SEC2 Booter image. The family selects the Booter, and the Booter
  * selects its payload: the payload's offsets only mean something for the DMEM
  * frame layout of this image. Families that share a pointer share one loaded
- * slot. */
+ * slot.
+ */
 struct gu_booter {
 	const char *file;
 	struct gu_booter_expect expect;
@@ -43,7 +45,8 @@ struct gu_booter {
 };
 
 /* Immutable file set for one GSP image. Families that share a pointer share
- * one loaded bundle. */
+ * one loaded bundle.
+ */
 struct gu_fw_desc {
 	const char *gsp, *boot, *desc, *signature_section;
 	u32 boot_size;

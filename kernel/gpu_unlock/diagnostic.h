@@ -9,7 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 /* Userspace builds are the integration harness; keep diagnostics opt-in so
- * the acceptance output is readable.  The kernel build is unchanged. */
+ * the acceptance output is readable.  The kernel build is unchanged.
+ */
 static inline int gu_diag_enabled(void)
 {
 	const char *on = getenv("GPU_UNLOCK_DIAG");
@@ -23,7 +24,8 @@ static inline int gu_diag_enabled(void)
 #endif
 
 /* No extra device reads. Preserve the errno and identify the exact guard in
- * the matching source bundled with each kit, including pure parser failures. */
+ * the matching source bundled with each kit, including pure parser failures.
+ */
 static inline int gu_diagnostic_result(int error, const char *file,
 				       const char *function, unsigned int line)
 {
