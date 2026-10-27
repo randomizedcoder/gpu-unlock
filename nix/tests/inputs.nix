@@ -65,7 +65,20 @@ let
   # The same hash with its last digit changed.
   editedHash = lib.substring 0 63 sourceHash + (if lib.hasSuffix "0" sourceHash then "1" else "0");
 
-  attribute = line: lib.elem line (lines gitattributes);
+  attribute = text: line: lib.elem line (lines text);
+
+  # What the flake reads: itself, the trees nix/sources.nix builds from,
+  # and .gitattributes for these rows. A github: input that lacks one of
+  # them fails to evaluate.
+  flakeTrees = [
+    "/flake.nix"
+    "/flake.lock"
+    "/nix"
+    "/tests"
+    "/.github"
+    "/.gitattributes"
+  ];
+  keepsFlake = text: lib.all (path: attribute text "${path} -export-ignore") flakeTrees;
 in
 [
   {
@@ -135,17 +148,18 @@ in
     actual = hashesIn "'${sourceHash}'";
   }
   {
-    description = "inputs, corner: .gitattributes keeps the flake in GitHub tarballs";
+    description = "inputs, corner: .gitattributes keeps the flake and its sources in GitHub tarballs";
     expected = true;
-    actual = lib.all attribute [
-      "/flake.nix -export-ignore"
-      "/flake.lock -export-ignore"
-      "/nix -export-ignore"
-    ];
+    actual = keepsFlake gitattributes;
+  }
+  {
+    description = "inputs, negative: a .gitattributes that leaves tests/ out loses the flake";
+    expected = false;
+    actual = keepsFlake (builtins.replaceStrings [ "/tests -export-ignore" ] [ "" ] gitattributes);
   }
   {
     description = "inputs, corner: .gitattributes still leaves *.bin out";
     expected = true;
-    actual = attribute "*.bin export-ignore";
+    actual = attribute gitattributes "*.bin export-ignore";
   }
 ]
