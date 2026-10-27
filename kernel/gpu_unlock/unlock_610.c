@@ -136,7 +136,7 @@ static u32 pci_identity(const struct pci_dev *pdev)
 }
 
 static void *diag_dma_alloc(struct unlock_transaction_work *work, const char *name,
-			   size_t size, dma_addr_t *dma, unsigned int flags)
+			   size_t size, dma_addr_t *dma, gfp_t flags)
 {
 	void *memory = dma_alloc_coherent(&work->pdev->dev, size, dma, flags);
 	if (!memory)

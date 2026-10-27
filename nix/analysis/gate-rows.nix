@@ -26,6 +26,11 @@ let
   allSources = "all ${toString sources} sources";
 in
 [
+  # gfp_t, pci_power_t and the other __bitwise types are only visible
+  # to sparse.
+  (none "sparse" "sparse: allocation flags passed as gfp_t"
+    "incorrect type in argument [0-9]+ \\(different base types\\)"
+  )
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")
