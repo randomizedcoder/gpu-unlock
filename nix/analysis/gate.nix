@@ -118,6 +118,13 @@ let
       expected = "0";
       outcome = "fail";
     }
+    {
+      description = "corner: bad expected fails";
+      report = twoHits;
+      pattern = argType;
+      expected = "two";
+      outcome = "fail";
+    }
   ];
 
   call =

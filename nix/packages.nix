@@ -14,6 +14,7 @@
 {
   lib,
   newScope,
+  writeShellApplication,
   linuxPackages_latest,
   python314,
 }:
@@ -52,4 +53,10 @@ lib.makeScope newScope (self: {
   analysis = self.callPackage ./analysis { src = self.sources.analysis; };
 
   devShell = self.callPackage ./devshell.nix { };
+
+  # The PASS/FAIL runner of every test table; see tests/table.sh.
+  tableRunner = writeShellApplication {
+    name = "gpu-unlock-table";
+    text = builtins.readFile ./tests/table.sh;
+  };
 })

@@ -22,6 +22,7 @@ let
   gitattributes = read ../../.gitattributes;
 
   lines = text: lib.splitString "\n" text;
+  make = import ../make-var.nix { inherit lib; };
 
   # Every whole run of lowercase hex digits that is a SHA-256, so a
   # longer run or a prefix does not count as one.
@@ -31,18 +32,10 @@ let
       map builtins.head (lib.filter builtins.isList (builtins.split "([0-9a-f]+)" text))
     );
 
-  # `NAME := value` from a Makefile text, as written.
-  makeRaw =
-    text: name:
-    builtins.head (
-      lib.findFirst (m: m != null) (throw "Makefile has no ${name}") (
-        map (builtins.match "${name}[[:space:]]*:=[[:space:]]*(.*)") (lines text)
-      )
-    );
-
-  # The same with $(NV) expanded.
+  # `NAME := value` from a Makefile text, with $(NV) expanded.
   makeVar =
-    text: name: builtins.replaceStrings [ "$(NV)" ] [ (makeRaw text "NV") ] (makeRaw text name);
+    text: name:
+    builtins.replaceStrings [ "$(NV)" ] [ (make.makeVar text "NV") ] (make.makeVar text name);
 
   # `SourceN: url` from the spec, with %{nv} expanded.
   specSource =

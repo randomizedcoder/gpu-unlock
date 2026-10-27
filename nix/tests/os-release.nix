@@ -12,6 +12,7 @@
   lib,
   runCommand,
   writeShellApplication,
+  tableRunner,
   bash,
   busybox,
   coreutils,
@@ -116,11 +117,6 @@ let
     busybox = "${busybox}/bin/busybox sh";
   };
 
-  table = writeShellApplication {
-    name = "gpu-unlock-table";
-    text = builtins.readFile ./table.sh;
-  };
-
   runCase =
     shell: run: c:
     let
@@ -158,7 +154,7 @@ in
 runCommand "gpu-unlock-os-release"
   {
     nativeBuildInputs = [
-      table
+      tableRunner
       rows
     ];
   }

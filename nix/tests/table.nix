@@ -15,18 +15,13 @@
 {
   lib,
   runCommand,
-  writeShellApplication,
   writeText,
+  tableRunner,
 }:
 
 name: rows:
 
 let
-  table = writeShellApplication {
-    name = "gpu-unlock-table";
-    text = builtins.readFile ./table.sh;
-  };
-
   attempt =
     value:
     let
@@ -100,6 +95,11 @@ let
       ];
     }
     {
+      description = "corner: a table with no rows fails";
+      outcome = "fail";
+      rows = [ ];
+    }
+    {
       description = "corner: an unexpected throw fails";
       outcome = "fail";
       rows = [
@@ -122,7 +122,7 @@ let
     fi
   '';
 in
-runCommand "gpu-unlock-${name}" { nativeBuildInputs = [ table ]; } ''
+runCommand "gpu-unlock-${name}" { nativeBuildInputs = [ tableRunner ]; } ''
   echo "=== table runner self-test ==="
   ${lib.concatMapStrings selfTest selfTests}
   echo ""

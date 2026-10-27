@@ -13,6 +13,7 @@
   lib,
   runCommand,
   writeShellApplication,
+  tableRunner,
   coreutils,
   findutils,
   firmware,
@@ -21,20 +22,11 @@
 let
   inherit (firmware) nvVersion;
 
+  inherit (import ../make-var.nix { inherit lib; }) makeVar words;
   read = path: builtins.readFile path;
-  joined = text: builtins.replaceStrings [ "\\\n" "\t" ] [ " " " " ] text;
-  words = text: lib.filter (word: word != "") (lib.splitString " " text);
 
   # The Makefile's FIRMWARE_FILES, continuation lines included.
-  firmwareFiles = words (
-    builtins.head (
-      lib.findFirst (m: m != null) (throw "Makefile has no FIRMWARE_FILES") (
-        map (builtins.match "FIRMWARE_FILES[[:space:]]*:=(.*)") (
-          lib.splitString "\n" (joined (read ../../Makefile))
-        )
-      )
-    )
-  );
+  firmwareFiles = words (makeVar (read ../../Makefile) "FIRMWARE_FILES");
 
   # MODULE_FIRMWARE(GU_FW_X) in firmware_610.c, resolved through the
   # GU_FW_X defines in recipes.h to file names.
@@ -56,11 +48,6 @@ let
     "gsp_boot_ga100.bin" = 4096;
     "gsp_boot_ga102.bin" = 24576;
     "gsp_boot_ad102.bin" = 36864;
-  };
-
-  table = writeShellApplication {
-    name = "gpu-unlock-table";
-    text = builtins.readFile ./table.sh;
   };
 
   rows = writeShellApplication {
@@ -108,7 +95,7 @@ in
 runCommand "gpu-unlock-firmware-files"
   {
     nativeBuildInputs = [
-      table
+      tableRunner
       rows
     ];
   }

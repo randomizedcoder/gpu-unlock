@@ -17,12 +17,7 @@
 }:
 
 let
-  kbuildNames = [
-    "gcc-warnings"
-    "gcc-analyzer"
-    "sparse"
-    "smatch"
-  ];
+  inherit (analysis) kbuildNames;
 
   # An attribute that is not there yet is a failed row, not an
   # evaluation error: tryEval only catches throws.

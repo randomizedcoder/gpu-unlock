@@ -12,11 +12,6 @@
 text:
 
 let
-  joined = builtins.replaceStrings [ "\\\n" ] [ " " ] text;
-  objects = lib.findFirst (m: m != null) (throw "Kbuild has no gpu_unlock-y") (
-    map (builtins.match "gpu_unlock-y[[:space:]]*:=(.*)") (lib.splitString "\n" joined)
-  );
+  inherit (import ../make-var.nix { inherit lib; }) makeVar words;
 in
-lib.filter (word: lib.hasSuffix ".o" word) (
-  lib.splitString " " (builtins.replaceStrings [ "\t" ] [ " " ] (builtins.head objects))
-)
+lib.filter (lib.hasSuffix ".o") (words (makeVar text "gpu_unlock-y"))

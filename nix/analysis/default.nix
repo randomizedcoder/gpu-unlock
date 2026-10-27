@@ -103,7 +103,12 @@ let
 in
 tools
 // {
-  inherit gate kbuildObjects moduleObjects;
+  inherit
+    gate
+    kbuildNames
+    kbuildObjects
+    moduleObjects
+    ;
   # Every report by tool name, for the dev shell's inputsFrom. Not a
   # derivation, so the flake does not export it as a package.
   reports = tools;
