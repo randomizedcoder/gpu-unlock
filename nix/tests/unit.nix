@@ -4,7 +4,8 @@
 #
 # checks.unit-tests: the tables in tests/unit, built on the host against
 # the kernel helpers that touch no hardware (recipes.c, payload.c,
-# gfw_eval.c) with AddressSanitizer and UBSan, and run. recipes.c keeps
+# gfw_eval.c, and the layout_610.c, prep_610.c and vbios_610.c parsers)
+# with AddressSanitizer and UBSan, and run. recipes.c keeps
 # the GA100 and AD102 families no card uses yet, hence
 # -Wno-unused-const-variable.
 #
@@ -25,6 +26,7 @@ stdenv.mkDerivation {
       -I kernel/gpu_unlock \
       tests/unit/*.c \
       kernel/gpu_unlock/recipes.c kernel/gpu_unlock/payload.c kernel/gpu_unlock/gfw_eval.c \
+      kernel/gpu_unlock/layout_610.c kernel/gpu_unlock/prep_610.c kernel/gpu_unlock/vbios_610.c \
       -o unit-tests
     runHook postBuild
   '';

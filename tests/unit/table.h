@@ -95,8 +95,31 @@ static inline void table_str(const char *suite, const char *description,
 		     expected ? expected : "NULL", got ? got : "NULL");
 }
 
+/* Little-endian fields in the synthetic images the parser rows build. */
+static inline void table_put(unsigned char *p, unsigned int width,
+			     unsigned long long value)
+{
+	unsigned int i;
+
+	for (i = 0; i < width; i++)
+		p[i] = (unsigned char)(value >> (8 * i));
+}
+
+static inline unsigned long long table_get(const unsigned char *p, unsigned int width)
+{
+	unsigned long long value = 0;
+	unsigned int i;
+
+	for (i = 0; i < width; i++)
+		value |= (unsigned long long)p[i] << (8 * i);
+	return value;
+}
+
 void test_recipes(void);
 void test_payload(void);
 void test_gfw_eval(void);
+void test_layout(void);
+void test_prep(void);
+void test_vbios(void);
 
 #endif
