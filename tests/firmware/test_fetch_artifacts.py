@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import urllib.request
 from pathlib import Path
 from typing import NamedTuple, Self
 from unittest import mock
@@ -88,7 +89,7 @@ class FetchArtifactsTest(unittest.TestCase):
                 destination.write_text("cached")
                 destination.chmod(0o600)
             opener = mock.Mock(return_value=row.response)
-            with mock.patch.object(fetch_artifacts.urllib.request, "urlopen", opener):
+            with mock.patch.object(urllib.request, "urlopen", opener):
                 got = outcome(lambda: fetch_artifacts.fetch(ENTRY, self.output, row.offline))
             if isinstance(got, str):
                 # Nothing is left behind, not even the partial download.

@@ -59,6 +59,12 @@ in
   (none "cppcheck-tests" "cppcheck-tests: no unknown macros" "\\[unknownMacro\\]")
   (none "cppcheck-tests" "cppcheck-tests: reports only tests/" "^kernel/")
   (atLeast 3 "mypy" "checked.txt" "mypy: checked the firmware scripts" "^firmware/[a-z_0-9]+\\.py$")
+  (atLeast 4 "mypy" "checked.txt" "mypy: checked the firmware tables"
+    "^tests/firmware/[a-z_0-9]+\\.py$"
+  )
+  (none "mypy" "mypy: firmware/ and tests/firmware type-check under --strict"
+    "^[^ ]+\\.py:[0-9]+: error:"
+  )
 ]
 # The 0 rows above only mean something if the tools ran. A failed
 # kbuild leaves an empty report, so each kbuild run must finish and
