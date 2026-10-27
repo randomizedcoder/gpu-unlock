@@ -168,6 +168,7 @@ int gu_falcon_reset(const struct gu_falcon_io *io, const struct gu_falcon_engine
 static bool falcon_dma_valid(u32 dest, u32 mem_off, dma_addr_t src, u32 size)
 {
 	u64 rounded = ((u64)size + 255) & ~255ull;
+
 	return size && !((dest | mem_off | src) & 255) &&
 		(u64)dest + rounded <= (1ull << 24) &&
 		(u64)mem_off + rounded <= (1ull << 32) &&

@@ -66,7 +66,6 @@ static int expansion(const u8 *rom, size_t length, u32 *adjust)
 	for (;;) {
 		u64 pcir, npde;
 		u32 bytes, last, sig;
-		u16 ext_rev, ext_len;
 
 		if (++images > 8 || range(length, pos, 0x1a) || !rom_signature(r16(rom + pos)))
 			return GU_DIAG(-EINVAL);
@@ -80,6 +79,8 @@ static int expansion(const u8 *rom, size_t length, u32 *adjust)
 		last = rom[pcir + 0x15] & 0x80;
 		npde = (pcir + r16(rom + pcir + 0x0a) + 15) & ~(u64)15;
 		if (!range(length, npde, 4) && r32(rom + npde) == 0x4544504e) {
+			u16 ext_rev, ext_len;
+
 			if (range(length, npde, 10))
 				return GU_DIAG(-EINVAL);
 			ext_rev = r16(rom + npde + 4);
@@ -133,6 +134,7 @@ static int descriptor(const u8 *rom, size_t length, u64 off,
 	 * and data DMA bases within that allocation. */
 	if ((hdr & 1) && fw.version == 2) {
 		u32 sec_base, sec_size;
+
 		if (size < 60 || range(length, off, size))
 			return GU_DIAG(-EINVAL);
 		fw.image_off = off + size;
@@ -233,11 +235,13 @@ int gpu_unlock_vbios_fwsec(const u8 *rom, size_t length, struct gpu_unlock_fwsec
 	 * requiring the container to start with 0xaa55. */
 	if (length >= 12 && r32(rom) == 0x4947564eu) {
 		u32 version = (r32(rom + 4) >> 8) & 0xffu;
+
 		if (version != 3)
 			return GU_DIAG(-EOPNOTSUPP);
 		{
 			u32 total = r32(rom + 8) & 0xfffffu;
 			u32 flash, dir;
+
 			if (range(length, total, 4))
 				return GU_DIAG(-EINVAL);
 			flash = r32(rom + total);

@@ -136,9 +136,10 @@ static u32 pci_identity(const struct pci_dev *pdev)
 }
 
 static void *diag_dma_alloc(struct unlock_transaction_work *work, const char *name,
-			   size_t size, dma_addr_t *dma, unsigned int flags)
+			   size_t size, dma_addr_t *dma, gfp_t flags)
 {
 	void *memory = dma_alloc_coherent(&work->pdev->dev, size, dma, flags);
+
 	if (!memory)
 		dev_err(&work->pdev->dev, "DMA allocation failed: asset=%s bytes=%zu pages_allocated=%u requested=%u\n",
 			name, size, work->pages_allocated, work->page_count);
@@ -602,7 +603,7 @@ static int unlock_transaction_claim(struct unlock_transaction_work *work)
 	     (work->pdev->current_state != PCI_UNKNOWN || !work->pdev->pm_cap)) ||
 	    (work->pdev->pm_cap &&
 	     (diag_pci_word(work, false, work->pdev->pm_cap + PCI_PM_CTRL, &pmcsr) ||
-	      (pmcsr & PCI_PM_CTRL_STATE_MASK) != PCI_D0)))
+	      !gpu_unlock_pmcsr_d0(pmcsr))))
 		return GU_RESULT(-EOPNOTSUPP);
 	if ((work->pdev->dev_flags & PCI_DEV_FLAGS_NO_FLR_RESET) ||
 	    !pci_is_pcie(work->pdev) ||
@@ -769,6 +770,7 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		goto out;
 	if (fw.version == 3) {
 		u32 sig_at = 0;
+
 		if (!fw.ucode_id ||
 		    read_bar(work, GU_FUSE_GSP_UCODE1 + (fw.ucode_id - 1) * 4, &fuse_raw)) {
 			ret = -EIO;
@@ -845,7 +847,6 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		ret = -EIO;
 	if (!ret) {
 		u64 frts_end = work->layout.frts_offset + work->frts_size;
-		u32 booter_hi;
 
 		/* FWSEC publishes the inclusive 4 KiB end; the Booter decodes
 		 * WPR2_ADDR_HI with a 128 KiB alignment term. Store the Booter
@@ -854,7 +855,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		if (frts_end < GU_WPR2_ALIGN || (frts_end & (GU_WPR2_ALIGN - 1))) {
 			ret = -EINVAL;
 		} else {
-			booter_hi = (u32)(((frts_end - GU_WPR2_ALIGN) >> 12) << 4);
+			u32 booter_hi = (u32)(((frts_end - GU_WPR2_ALIGN) >> 12) << 4);
+
 			dev_dbg(&work->pdev->dev,
 				"FWSEC WPR2 restore encoding: raw_hi=%#x booter_hi=%#x frts_end=%#llx\n",
 				wpr_hi, booter_hi, (unsigned long long)frts_end);
@@ -976,6 +978,7 @@ static int unlock_transaction_boot(struct unlock_transaction_work *work)
 	u32 ctl, reset_plm, engine, scratch, identity, mailbox0, mailbox1;
 	u32 wpr_lo = 0, wpr_hi = 0, feat = 0, wpr_cfg = 0, csberr = 0, fhstate = 0;
 	bool fresh, cleanup_complete;
+
 	if ((work->state != GU_PUBLISHED && work->state != GU_ACTIVE) || !work->master || !work->firmware_started)
 		return GU_RESULT(-EINVAL);
 	/* This Booter build consumes the WprMeta sysmem address as a 64-bit
@@ -1111,6 +1114,7 @@ static int restore_stock_signature(struct unlock_transaction_work *work)
 static int restore_frts(struct unlock_transaction_work *work)
 {
 	u32 lo = 0, hi = 0;
+
 	if (!work->frts_saved)
 		return GU_RESULT(-EPROTO);
 	read_bar(work, GU_WPR2_ADDR_LO_OFFSET, &lo);
@@ -1155,15 +1159,18 @@ static int run_privileged_writes(struct unlock_transaction_work *work,
 	size_t i;
 	u32 after = 0;
 	int ret;
+
 	if (work->state != GU_PUBLISHED && work->state != GU_ACTIVE)
 		return GU_RESULT(-EPROTO);
 	work->state = GU_ACTIVE;
 	for (i = 0; i < table->count; i++) {
 		const struct gu_reg_write *entry = &table->entries[i];
+
 		work->write_index = i;
 		for (work->attempt = 1; work->attempt <= 2; work->attempt++) {
 			u32 before, lo = 0, hi = 0, ctl = 0, engine = 0;
 			struct gu_boot_state st;
+
 			work->error_reported = false;
 			work->target_addr = entry->addr;
 			work->target_value = entry->value;
@@ -1267,10 +1274,12 @@ static int run_host_writes(struct unlock_transaction_work *work,
 			   const struct gu_write_table *table)
 {
 	size_t i;
+
 	for (i = 0; i < table->count; i++) {
 		const struct gu_reg_write *entry = &table->entries[i];
 		u32 observed = 0;
 		int ret;
+
 		work->write_index = i;
 		ret = write_selector(work, "host", entry->addr, entry->value);
 		if (ret) {
@@ -1436,6 +1445,7 @@ static int unlock_transaction_reset(struct unlock_transaction_work *work)
 	{
 		struct gu_falcon_io io = falcon_io(work);
 		struct gu_falcon_evidence reset;
+
 		ret = gu_falcon_engine_reset(&io, GU_SEC2_BASE, "post-FLR", NULL, &reset);
 	}
 	if (ret)
@@ -1517,12 +1527,14 @@ int gpu_unlock_610_unlock(const struct gu_device *device, const struct gpu_unloc
 		ret = unlock_transaction_claim(work);
 	if (!ret) {
 		u32 chip;
+
 		if (read_bar(work, GU_PMC_BOOT_0_OFFSET, &chip) || inaccessible(chip) ||
 		    ((chip >> 20) & 0x1ff) != work->card->chip)
 			ret = GU_RESULT(-ENODEV);
 	}
 	if (!ret) {
 		size_t i;
+
 		for (i = 0; i < work->card->family->privileged.count; i++)
 			if ((u64)work->card->family->privileged.entries[i].addr + 4 > work->bar_len)
 				ret = GU_RESULT(-ERANGE);

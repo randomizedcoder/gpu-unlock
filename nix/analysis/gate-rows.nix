@@ -26,10 +26,29 @@ let
   allSources = "all ${toString sources} sources";
 in
 [
+  # gfp_t, pci_power_t and the other __bitwise types are only visible
+  # to sparse.
+  (none "sparse" "sparse: PMCSR state not compared with pci_power_t"
+    "restricted pci_power_t degrades to integer"
+  )
+  (none "sparse" "sparse: allocation flags passed as gfp_t"
+    "incorrect type in argument [0-9]+ \\(different base types\\)"
+  )
+  # A sourced /etc/os-release is a file shellcheck cannot follow.
+  (none "shellcheck" "shellcheck: no os-release sourced that it cannot follow" "\\[SC1091\\]")
+  (none "shellcheck" "shellcheck: CI and test scripts clean" "\\[SC[0-9]+\\]")
+  # Linux kernel coding style, as checkpatch reads it.
+  (none "checkpatch" "checkpatch: no ERRORs" ": ERROR:")
+  (none "checkpatch" "checkpatch: no ARRAY_SIZE" ": WARNING:ARRAY_SIZE:")
+  (none "checkpatch" "checkpatch: no LINE_SPACING" ": WARNING:LINE_SPACING:")
+  (none "checkpatch" "checkpatch: no LEADING_SPACE" ": WARNING:LEADING_SPACE:")
+  (none "checkpatch" "checkpatch: no SPACE_BEFORE_TAB" ": WARNING:SPACE_BEFORE_TAB:")
   # cppcheck on the kernel alone: the integration shim is not the kernel.
   (none "cppcheck" "cppcheck: every kernel source parses" "\\[syntaxError\\]")
   (none "cppcheck" "cppcheck: no conditions decided by test mocks" "\\[knownConditionTrueFalse\\]")
   (none "cppcheck" "cppcheck: no unknown macros (main.c is analysed)" "\\[unknownMacro\\]")
+  (none "cppcheck" "cppcheck: variables declared in the scope that uses them" "\\[variableScope\\]")
+  (none "cppcheck" "cppcheck: no parameter shadows a file-scope variable" "\\[shadowVariable\\]")
   (atLeast 1 "cppcheck" "checked.txt" "cppcheck: main.c is in the kernel run"
     "^Checking kernel/gpu_unlock/main\\.c "
   )

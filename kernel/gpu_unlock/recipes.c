@@ -32,7 +32,7 @@ static const struct gu_payload_word ga102_v67_words[] = {
 	.value_off = 0xf948,					\
 	.address_off = 0xf960,					\
 	.words = ga102_v67_words,				\
-	.word_count = sizeof(ga102_v67_words) / sizeof(ga102_v67_words[0]), \
+	.word_count = ARRAY_SIZE(ga102_v67_words),		\
 	.completion = GU_PAYLOAD_HALT_RESET_PLM,		\
 }
 
@@ -45,14 +45,14 @@ static const struct gu_payload ad102_v67 = GU_PAYLOAD_V67("ad102-v67");
 /* Same per-entry image as GA10x. These are the stores, in order. */
 static const struct gu_reg_write ad102_plm[] = {
 	{ GU_WPR_CFG_PLM_OFFSET,	0xfffff0ff },
-	{ GU_WPR_PLM_OFFSET, 		0xffffffff },
-	{ GU_FEAT_PLM_OFFSET, 		0xffffffff },
+	{ GU_WPR_PLM_OFFSET,		0xffffffff },
+	{ GU_FEAT_PLM_OFFSET,		0xffffffff },
 };
 
 /* Only the masks needed by the GA10x compute recipe. */
 static const struct gu_reg_write ga10x_plm[] = {
-	{ GU_WPR_CFG_PLM_OFFSET, 	0xfffff0ff },
-	{ GU_FEAT_PLM_OFFSET,    	0xffffffff },
+	{ GU_WPR_CFG_PLM_OFFSET,	0xfffff0ff },
+	{ GU_FEAT_PLM_OFFSET,		0xffffffff },
 };
 
 /* cmpunlocker 2d10f891, sec2-postbl-plm-ss-cfg.patch, plmTable.
@@ -60,23 +60,23 @@ static const struct gu_reg_write ga10x_plm[] = {
  * link retraining, ECC or GPC/TPC configuration is performed in Stage 1.
  */
 static const struct gu_reg_write ga100_plm[] = {
-	{ GU_WPR_CFG_PLM_OFFSET,   	0xfffff0ff },
-	{ GU_FBPA_PLM_OFFSET,      	0xffffffff },
-	{ GU_WPR_PLM_OFFSET,       	0xffffffff },
-	{ GU_FEAT_PLM_OFFSET,      	0xffffffff },
-	{ GU_XVE_PLM_OFFSET,       	0xffffffff },
-	{ GU_XVE_B_PLM_OFFSET,     	0xffffffff },
-	{ GU_XVE_C_PLM_OFFSET,     	0xffffffff },
-	{ GU_FEAT2_PLM_OFFSET,     	0xffffffff },
-	{ GU_OPT_PLM_OFFSET,       	0xffffffff },
-	{ GU_RECONFIG_PLM_OFFSET,  	0xffffffff },
-	{ GU_PJTAG_PLM_OFFSET,     	0xffffffff },
-	{ GU_PJTAG_SEC_PLM_OFFSET, 	0xffffffff },
+	{ GU_WPR_CFG_PLM_OFFSET,	0xfffff0ff },
+	{ GU_FBPA_PLM_OFFSET,		0xffffffff },
+	{ GU_WPR_PLM_OFFSET,		0xffffffff },
+	{ GU_FEAT_PLM_OFFSET,		0xffffffff },
+	{ GU_XVE_PLM_OFFSET,		0xffffffff },
+	{ GU_XVE_B_PLM_OFFSET,		0xffffffff },
+	{ GU_XVE_C_PLM_OFFSET,		0xffffffff },
+	{ GU_FEAT2_PLM_OFFSET,		0xffffffff },
+	{ GU_OPT_PLM_OFFSET,		0xffffffff },
+	{ GU_RECONFIG_PLM_OFFSET,	0xffffffff },
+	{ GU_PJTAG_PLM_OFFSET,		0xffffffff },
+	{ GU_PJTAG_SEC_PLM_OFFSET,	0xffffffff },
 };
 
 /* Host side writes for speed unlocks */
 static const struct gu_reg_write selectors[] = {
-	{ GU_FEAT_SS0_OFFSET, GU_SS0_UNLOCK }, 
+	{ GU_FEAT_SS0_OFFSET, GU_SS0_UNLOCK },
 	{ GU_FEAT_SS1_OFFSET, GU_SS1_UNLOCK },
 };
 
@@ -86,11 +86,11 @@ static const struct gu_booter sec2_ga100 = {
 	.payload = &ga100_v67,
 	.expect = {
 		.image_size = 60160,
-		.num_sigs = 1, 
+		.num_sigs = 1,
 		.sig_bytes = 384,
-		.os_data_off = 34560, 
-		.os_data_size = 25600, 
-		.app_code_size = 34304, 
+		.os_data_off = 34560,
+		.os_data_size = 25600,
+		.app_code_size = 34304,
 		.patch_loc = 35072,
 	},
 };
@@ -196,8 +196,8 @@ static const struct gu_card cards[] = {
 	GA104(0x24a4), GA104(0x24ac), GA104(0x24ad), GA104(0x24af),
 	GA104(0x24bf), GA104(0x24c0), GA104(0x24c7), GA104(0x24c8),
 	GA104(0x24c9), GA104(0x24dc), GA104(0x24dd), GA104(0x24df),
-	GA104(0x24e0), 
-		
+	GA104(0x24e0),
+
 	GA106(0x2501), GA106(0x2503), GA106(0x2504), GA106(0x2505),
 	GA106(0x2507), GA106(0x2508), GA106(0x2509), GA106(0x252f),
 	GA106(0x2544),
@@ -206,7 +206,8 @@ static const struct gu_card cards[] = {
 const struct gu_card *gu_card_find(u16 device)
 {
 	size_t i;
-	for (i = 0; i < sizeof(cards) / sizeof(cards[0]); i++)
+
+	for (i = 0; i < ARRAY_SIZE(cards); i++)
 		if (cards[i].device == device)
 			return &cards[i];
 	return NULL;
