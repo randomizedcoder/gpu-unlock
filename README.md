@@ -40,6 +40,28 @@ in `/etc/default/grub`, then run `sudo update-grub`.
 - **UKI / generated entries:** add it to `/etc/kernel/cmdline` and regenerate
 your boot images/entries (e.g. `sudo mkinitcpio -P` for mkinitcpio UKIs).
 
+### NixOS
+
+Add the flake as an input and import its module; it builds `gpu_unlock` for
+`boot.kernelPackages`, puts it and its firmware in the initrd, and sets the
+kernel command line:
+
+```nix
+inputs.gpu-unlock.url = "github:Zagitta/gpu-unlock";
+
+# in nixosSystem's modules:
+gpu-unlock.nixosModules.default
+{
+  hardware.gpu-unlock = {
+    enable = true;
+    targets = "all";            # or [ "0000:21:00.0" ]
+  };
+}
+```
+
+`nix flake check` builds the module and firmware and runs the tests and
+static analysis; `nix develop` has the build and analysis tools.
+
 # FAQ
 
 - Q: Does this depend on a specific driver version? I see `610.43.03` is pinned.  
