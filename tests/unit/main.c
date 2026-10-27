@@ -8,6 +8,9 @@ int main(void)
 	test_recipes();
 	test_payload();
 	test_gfw_eval();
+	test_layout();
+	test_prep();
+	test_vbios();
 	/* An empty run tests nothing, so it must not pass. */
 	if (!table_rows) {
 		printf("FAIL  no rows ran\n");
