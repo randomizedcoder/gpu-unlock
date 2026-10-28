@@ -5,21 +5,12 @@ let
   nvidiaVersion = "610.43.03";
   kernelBuild = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
   kbuildFlags = lib.escapeShellArgs kernelModuleMakeFlags;
-  # Build the source in this checkout, including downstream changes. Keep Nix
-  # metadata outside the source closure so updating flake.lock alone is cheap.
-  src = lib.fileset.toSource {
-    root = ../../.;
-    fileset = lib.fileset.unions [
-      ../../VERSION
-      ../../Makefile
-      ../../README.md
-      ../../kernel
-      ../../firmware
-      ../../licenses
-      (lib.fileset.difference ../../packaging ./.)
-      ../../debian
-    ];
-  };
+  # Build from this checkout, including downstream changes, but give each
+  # package only what its build reads, so editing the README, CI or other
+  # packaging does not rebuild the module or the firmware.
+  source = files: lib.fileset.toSource { root = ../../.; fileset = lib.fileset.unions files; };
+  moduleSrc = source [ ../../kernel ../../README.md ../../licenses/GPL-2.0.txt ];
+  firmwareSrc = source [ ../../Makefile ../../VERSION ../../firmware ];
   nvidiaSource = fetchurl {
     url = "https://download.nvidia.com/XFree86/NVIDIA-kernel-module-source/NVIDIA-kernel-module-source-${nvidiaVersion}.tar.xz";
     sha256 = "7e118923c7a23edc36114d63273a46e3e04e9af98695a42203e7ac2dfe9fc1dc";
@@ -30,7 +21,8 @@ let
   };
   firmware = stdenv.mkDerivation {
     pname = "gpu-unlock-firmware";
-    inherit version src;
+    inherit version;
+    src = firmwareSrc;
     nativeBuildInputs = [ python3 zstd ];
     buildPhase = ''
       runHook preBuild
@@ -58,7 +50,8 @@ let
 in
 stdenv.mkDerivation {
   pname = "gpu-unlock";
-  inherit version src;
+  inherit version;
+  src = moduleSrc;
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];
   buildPhase = ''

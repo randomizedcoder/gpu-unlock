@@ -34,7 +34,8 @@
         nixos-integration = import ./packaging/nix/checks.nix { inherit pkgs nixpkgs; };
         eval-tests = pkgs.callPackage ./packaging/nix/tests/table.nix { } "eval-tests"
           (import ./packaging/nix/tests/module.nix { inherit pkgs nixpkgs; }
-            ++ import ./packaging/nix/tests/inputs.nix { inherit (nixpkgs) lib; inherit (module) firmware; });
+            ++ import ./packaging/nix/tests/inputs.nix { inherit (nixpkgs) lib; inherit (module) firmware; }
+            ++ import ./packaging/nix/tests/sources.nix { inherit module; });
       } // nixpkgs.lib.optionalAttrs hasScriptedInitrd {
         nixos-integration-scripted = import ./packaging/nix/checks.nix {
           inherit pkgs nixpkgs;
