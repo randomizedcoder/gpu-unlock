@@ -14,8 +14,9 @@ ubuntu)
 	# The hardware enablement kernel, where the release has one.
 	apt-get install -qy --no-install-recommends "linux-headers-generic-hwe-$(sh .github/ci/os-release.sh VERSION_ID)" || :
 	# Its headers do not pull in the gcc it was built with.
-	apt-get install -qy --no-install-recommends $(grep -h '^CONFIG_CC_VERSION_TEXT=' \
-		/usr/src/linux-headers-*/.config | grep -o 'gcc-[0-9]*' | sort -u) ;;
+	grep -h '^CONFIG_CC_VERSION_TEXT=' /usr/src/linux-headers-*/.config |
+		grep -o 'gcc-[0-9]*' | sort -u |
+		xargs apt-get install -qy --no-install-recommends ;;
 fedora)
 	dnf install -qy make gcc kernel-devel ;;
 arch)
