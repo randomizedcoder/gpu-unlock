@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import zlib
 import re
 import struct
 import sys
+import zlib
 from pathlib import Path
 
 MAGIC = 0x314C5442
@@ -38,7 +38,7 @@ def _array_bytes(text: str, label: str) -> tuple[bytes, bool, int]:
     expected = int(sizes[-1]); compressed = compression[-1] == 'YES'
     if not 0 < expected <= 16 * 1024 * 1024:
         raise ValueError('asset exceeds extraction limit')
-    declaration = re.match(re.escape(marker) + r"\s*=\s*\{([^}]*)\};", text[start:], re.S)
+    declaration = re.match(re.escape(marker) + r"\s*=\s*\{([^}]*)\};", text[start:], re.DOTALL)
     if not declaration:
         raise ValueError('malformed byte-array declaration')
     tokens = declaration[1].strip().rstrip(',').split(',')
