@@ -110,7 +110,7 @@ int memcpy_fromio(void *dest, const void __iomem *source, size_t size)
 	return gd_prom_copy(w->dev, (u32)((const char *)source - (const char *)w->base), dest, size);
 }
 
-void *dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *address, int flags)
+void *dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *address, gfp_t flags)
 {
 	static uint64_t next = 0x10000000;
 	void *cpu;

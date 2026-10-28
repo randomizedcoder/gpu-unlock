@@ -23,6 +23,7 @@ typedef int32_t s32;
 typedef uint64_t dma_addr_t;
 typedef uint64_t resource_size_t;
 typedef int64_t ktime_t;
+typedef unsigned int gfp_t;
 
 #define __iomem
 #define __init
@@ -118,7 +119,7 @@ u32 readl(const void __iomem *address);
 void writel(u32 value, void __iomem *address);
 int memcpy_fromio(void *dest, const void __iomem *source, size_t size);
 
-void *dma_alloc_coherent(struct device *, size_t, dma_addr_t *, int);
+void *dma_alloc_coherent(struct device *, size_t, dma_addr_t *, gfp_t);
 void dma_free_coherent(struct device *, size_t, void *, dma_addr_t);
 int dma_set_mask(struct device *, u64);
 int dma_set_coherent_mask(struct device *, u64);

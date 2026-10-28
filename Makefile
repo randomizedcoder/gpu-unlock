@@ -30,7 +30,7 @@ DEBS    := $(foreach p,dkms firmware,$(DEBDIR)/gpu-unlock-$(p)_$(VERSION)_all.de
 .PHONY: all dist inputs firmware assets install-dkms install-firmware \
         install-mkinitcpio install-initramfs-tools install-dracut \
         install-licenses arch deb rpm install install-arch install-deb install-rpm \
-        test-module test-packages
+        test-module test-packages check check-unit check-python
 
 all:
 
@@ -149,3 +149,23 @@ test-module:
 
 test-packages:
 	INPUTS=$(INPUTS) tests/docker.sh package
+
+# Host table tests, no GPU or NVIDIA download: the kernel helpers that
+# touch no hardware, under AddressSanitizer and UBSan, and the firmware
+# scripts. recipes.c keeps the GA100 and AD102 families no card uses
+# yet, hence -Wno-unused-const-variable; test_recipes.c includes it.
+UNIT_SOURCES := $(wildcard tests/unit/*.c) \
+                $(addprefix kernel/gpu_unlock/,payload.c gfw_eval.c layout_610.c prep_610.c vbios_610.c)
+
+check: check-unit check-python
+
+check-unit:
+	mkdir -p $(DISTDIR)
+	$(CC) -std=gnu11 -O1 -g -Wall -Wextra -Werror -Wno-unused-const-variable \
+		-fsanitize=address,undefined -fno-sanitize-recover=all \
+		-I kernel/gpu_unlock $(UNIT_SOURCES) -o $(DISTDIR)/unit-tests
+	$(DISTDIR)/unit-tests
+
+check-python:
+	PYTHONPATH=firmware:tests/firmware PYTHONDONTWRITEBYTECODE=1 \
+		$(PYTHON) -m unittest discover -s tests/firmware
