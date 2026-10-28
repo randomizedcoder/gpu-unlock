@@ -136,7 +136,7 @@ static u32 pci_identity(const struct pci_dev *pdev)
 }
 
 static void *diag_dma_alloc(struct unlock_transaction_work *work, const char *name,
-			   size_t size, dma_addr_t *dma, unsigned int flags)
+			   size_t size, dma_addr_t *dma, gfp_t flags)
 {
 	void *memory = dma_alloc_coherent(&work->pdev->dev, size, dma, flags);
 	if (!memory)
@@ -171,7 +171,7 @@ static int read_bar(struct unlock_transaction_work *work, u32 offset, u32 *value
 	return 0;
 }
 
-static void write_bar(struct unlock_transaction_work *work, u32 offset, u32 value)
+static void write_bar(const struct unlock_transaction_work *work, u32 offset, u32 value)
 {
 	writel(value, work->bar + offset);
 }
@@ -602,7 +602,7 @@ static int unlock_transaction_claim(struct unlock_transaction_work *work)
 	     (work->pdev->current_state != PCI_UNKNOWN || !work->pdev->pm_cap)) ||
 	    (work->pdev->pm_cap &&
 	     (diag_pci_word(work, false, work->pdev->pm_cap + PCI_PM_CTRL, &pmcsr) ||
-	      (pmcsr & PCI_PM_CTRL_STATE_MASK) != PCI_D0)))
+	      !gpu_unlock_pmcsr_d0(pmcsr))))
 		return GU_RESULT(-EOPNOTSUPP);
 	if ((work->pdev->dev_flags & PCI_DEV_FLAGS_NO_FLR_RESET) ||
 	    !pci_is_pcie(work->pdev) ||
@@ -845,7 +845,6 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		ret = -EIO;
 	if (!ret) {
 		u64 frts_end = work->layout.frts_offset + work->frts_size;
-		u32 booter_hi;
 
 		/* FWSEC publishes the inclusive 4 KiB end; the Booter decodes
 		 * WPR2_ADDR_HI with a 128 KiB alignment term. Store the Booter
@@ -854,7 +853,8 @@ static int unlock_transaction_fwsec(struct unlock_transaction_work *work)
 		if (frts_end < GU_WPR2_ALIGN || (frts_end & (GU_WPR2_ALIGN - 1))) {
 			ret = -EINVAL;
 		} else {
-			booter_hi = (u32)(((frts_end - GU_WPR2_ALIGN) >> 12) << 4);
+			u32 booter_hi = (u32)(((frts_end - GU_WPR2_ALIGN) >> 12) << 4);
+
 			dev_dbg(&work->pdev->dev,
 				"FWSEC WPR2 restore encoding: raw_hi=%#x booter_hi=%#x frts_end=%#llx\n",
 				wpr_hi, booter_hi, (unsigned long long)frts_end);
@@ -877,11 +877,11 @@ out:
 static int unlock_transaction_gfw(struct unlock_transaction_work *work)
 {
 	ktime_t deadline = ktime_add_us(ktime_get(), GU_GFW_TIMEOUT_US);
-	int assessed = -EAGAIN;
 
 	for (;;) {
 		struct gpu_unlock_gfw_sample sample = { };
 		u16 vendor = 0xffff;
+		int assessed;
 
 		if (read_bar(work, GU_GFW_PLM_OFFSET, &sample.plm) ||
 		    read_bar(work, GU_GFW_BOOT_OFFSET, &sample.boot) ||
