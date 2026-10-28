@@ -5,7 +5,8 @@
 #include "prep_610.h"
 
 /* One word baked into the signature image at a fixed DMEM-relative offset.
- * These are image offsets, not BAR0 registers. */
+ * These are image offsets, not BAR0 registers.
+ */
 struct gu_payload_word {
 	u32 offset, value;
 };
@@ -13,7 +14,8 @@ struct gu_payload_word {
 /* What a completed SEC2 launch must show besides a halt and a reopened
  * RESET_PLM. Payloads whose exit returns the input metadata pointer in
  * MAILBOX0/1 use the echo variant; anything unmeasured stays on the generic
- * predicate rather than inventing a return convention. */
+ * predicate rather than inventing a return convention.
+ */
 enum gu_payload_completion {
 	GU_PAYLOAD_HALT_RESET_PLM,
 	GU_PAYLOAD_HALT_RESET_PLM_ECHO,
@@ -22,7 +24,8 @@ enum gu_payload_completion {
 /* One signed SEC2 Booter's DMEM program. Selected by the Booter, never by the
  * family: the gadget and frame offsets are relative to that image's layout, so
  * another Booter cannot use them. The address and value slots carry the single
- * privileged write of one invocation. */
+ * privileged write of one invocation.
+ */
 struct gu_payload {
 	const char *name;
 	u32 size;		/* signature allocation in bytes */

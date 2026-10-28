@@ -44,7 +44,8 @@ int gu_falcon_poll(const struct gu_falcon_io *io, u32 offset, u32 mask, u32 expe
 			return 0;
 		if (ktime_compare(ktime_get(), deadline) >= 0) {
 			/* Console loglevel hides info. A tolerated timeout must not
-			 * look like the failure that stopped the boot. */
+			 * look like the failure that stopped the boot.
+			 */
 			if (!timeout_is_failure) {
 				dev_dbg(io->dev, "poll timeout tolerated: reg=%#x last=%#x mask=%#x expected=%#x budget_us=%u\n",
 					offset, value, mask, expect, budget_us);
@@ -164,10 +165,12 @@ int gu_falcon_reset(const struct gu_falcon_io *io, const struct gu_falcon_engine
 }
 
 /* DMATRFMOFFS is 24 bits, FBOFFS is 32 bits, and BASE is 49 bits.
- * Reject truncation/wrap before submitting any part of a transfer. */
+ * Reject truncation/wrap before submitting any part of a transfer.
+ */
 static bool falcon_dma_valid(u32 dest, u32 mem_off, dma_addr_t src, u32 size)
 {
 	u64 rounded = ((u64)size + 255) & ~255ull;
+
 	return size && !((dest | mem_off | src) & 255) &&
 		(u64)dest + rounded <= (1ull << 24) &&
 		(u64)mem_off + rounded <= (1ull << 32) &&

@@ -20,7 +20,8 @@ module_param(resume, bool, 0644);
 MODULE_PARM_DESC(resume, "Unlock the cards again after resume from suspend, which powers them off (default: on)");
 
 /* A target card. Those unlocked at boot stay listed, with a reference, to be
- * unlocked again after each resume. */
+ * unlocked again after each resume.
+ */
 struct card {
 	struct list_head node;
 	struct gu_device device;
@@ -37,9 +38,11 @@ static struct pci_dev *next_supported(struct pci_dev *from, const struct gu_card
 {
 	struct pci_dev *pdev = from;
 
-	while ((pdev = pci_get_device(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID, pdev)))
-		if ((*recipe = gu_card_find(pdev->device)))
+	while ((pdev = pci_get_device(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID, pdev))) {
+		*recipe = gu_card_find(pdev->device);
+		if (*recipe)
 			return pdev;
+	}
 	return NULL;
 }
 
@@ -61,7 +64,8 @@ static void unlock_one(void *data, async_cookie_t cookie)
 }
 
 /* After resume, before nvidia resumes the card it suspended. Losing power in
- * suspend to RAM reset the selectors. Runs concurrently for each card. */
+ * suspend to RAM reset the selectors. Runs concurrently for each card.
+ */
 static void unlock_again(void *data, async_cookie_t cookie)
 {
 	struct card *card = data;
@@ -113,7 +117,8 @@ static void drop_card(struct card *card)
 }
 
 /* nvidia resumes its cards from its own notifier, at the default priority 0,
- * once this returns: every card must be finished by then. */
+ * once this returns: every card must be finished by then.
+ */
 static int gpu_unlock_pm_notify(struct notifier_block *nb, unsigned long event, void *unused)
 {
 	if (event == PM_POST_SUSPEND && resume)

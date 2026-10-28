@@ -15,7 +15,8 @@
 #include "vbios_610.h"
 
 /* Production selects 0x85. The integration build selects the debug app
- * 0x45; this is a compile-time seam, never a runtime knob. */
+ * 0x45; this is a compile-time seam, never a runtime knob.
+ */
 #ifndef GPU_UNLOCK_FWSEC_APP
 #define GPU_UNLOCK_FWSEC_APP 0x85
 #endif
@@ -131,9 +132,11 @@ static int descriptor(const u8 *rom, size_t length, u64 off,
 	fw.version = (hdr >> 8) & 0xff;
 	/* GA100 uses the v2 generic-loader descriptor, with embedded signatures.
 	 * Its image is kept contiguous here; the loader receives separate code
-	 * and data DMA bases within that allocation. */
+	 * and data DMA bases within that allocation.
+	 */
 	if ((hdr & 1) && fw.version == 2) {
 		u32 sec_base, sec_size;
+
 		if (size < 60 || range(length, off, size))
 			return GU_DIAG(-EINVAL);
 		fw.image_off = off + size;
@@ -148,7 +151,8 @@ static int descriptor(const u8 *rom, size_t length, u64 off,
 		fw.dmem_pa = r32(rom + off + 44);
 		fw.dmem_size = r32(rom + off + 48);
 		/* Restrict to the layout this contiguous adapter implements; refuse
-		 * alternate images, relocation, compression and nonzero entry. */
+		 * alternate images, relocation, compression and nonzero entry.
+		 */
 		if (!fw.image_size || !fw.imem_size || !fw.dmem_size ||
 		    r32(rom + off + 8) != fw.image_size || r32(rom + off + 12) ||
 		    r32(rom + off + 52) || r32(rom + off + 56) ||
@@ -231,14 +235,17 @@ int gpu_unlock_vbios_fwsec(const u8 *rom, size_t length, struct gpu_unlock_fwsec
 	/* The GPU exposes the complete VBIOS container through the PROM
 	 * window.  NVIDIA's kgspExtractVbiosFromRom_TU102 walks the IFR
 	 * header to the first PCI expansion image; match that here instead of
-	 * requiring the container to start with 0xaa55. */
+	 * requiring the container to start with 0xaa55.
+	 */
 	if (length >= 12 && r32(rom) == 0x4947564eu) {
 		u32 version = (r32(rom + 4) >> 8) & 0xffu;
+
 		if (version != 3)
 			return GU_DIAG(-EOPNOTSUPP);
 		{
 			u32 total = r32(rom + 8) & 0xfffffu;
 			u32 flash, dir;
+
 			if (range(length, total, 4))
 				return GU_DIAG(-EINVAL);
 			flash = r32(rom + total);
