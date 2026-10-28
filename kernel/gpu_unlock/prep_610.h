@@ -3,6 +3,7 @@
 #define GPU_UNLOCK_PREP_610_H
 
 #ifdef __KERNEL__
+#include <linux/kernel.h>
 #include <linux/types.h>
 #else
 #include <stdbool.h>
@@ -13,6 +14,9 @@ typedef uint16_t u16;
 #define GPU_UNLOCK_U32_DEFINED
 typedef uint32_t u32;
 typedef uint64_t u64;
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif
 #endif
 
 #include "layout_610.h"

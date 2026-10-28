@@ -12,22 +12,24 @@
  * the acceptance output is readable.  The kernel build is unchanged. */
 static inline int gu_diag_enabled(void)
 {
-    const char *on = getenv("GPU_UNLOCK_DIAG");
-    return on && *on && strcmp(on, "0");
+	const char *on = getenv("GPU_UNLOCK_DIAG");
+
+	return on && *on && strcmp(on, "0");
 }
 #define GU_NOTE(fmt, ...) do { \
-    if (gu_diag_enabled()) fprintf(stderr, "gpu_unlock: " fmt, ##__VA_ARGS__); \
+	if (gu_diag_enabled()) \
+		fprintf(stderr, "gpu_unlock: " fmt, ##__VA_ARGS__); \
 } while (0)
 #endif
 
 /* No extra device reads. Preserve the errno and identify the exact guard in
  * the matching source bundled with each kit, including pure parser failures. */
 static inline int gu_diagnostic_result(int error, const char *file,
-                                      const char *function, unsigned int line)
+				       const char *function, unsigned int line)
 {
-    if (error)
-        GU_NOTE("failure %s:%u %s error=%d\n", file, line, function, error);
-    return error;
+	if (error)
+		GU_NOTE("failure %s:%u %s error=%d\n", file, line, function, error);
+	return error;
 }
 #define GU_DIAG(result) gu_diagnostic_result((result), __FILE__, __func__, __LINE__)
 #endif
