@@ -55,23 +55,23 @@ in
   {
     description = "positive: one card on the command line";
     actual = params (system one { });
-    expected = [ "gpu_unlock.targets=0000:01:00.0" "gpu_unlock.resume=0" ];
+    expected = [ "gpu_unlock.targets=0000:01:00.0" ];
   }
   {
     description = "positive: all cards";
     actual = params (system (targets [ "all" ]) { });
-    expected = [ "gpu_unlock.targets=all" "gpu_unlock.resume=0" ];
+    expected = [ "gpu_unlock.targets=all" ];
   }
   {
     description = "positive: two cards, comma separated";
     actual = params (system (targets [ "0000:01:00.0" "0000:02:00.0" ]) { });
-    expected = [ "gpu_unlock.targets=0000:01:00.0,0000:02:00.0" "gpu_unlock.resume=0" ];
+    expected = [ "gpu_unlock.targets=0000:01:00.0,0000:02:00.0" ];
   }
   {
     description = "positive: enabled installs the module and firmware, and loads it in the initrd";
     actual = installed one;
     expected = {
-      params = [ "gpu_unlock.targets=0000:01:00.0" "gpu_unlock.resume=0" ];
+      params = [ "gpu_unlock.targets=0000:01:00.0" ];
       module = true;
       firmware = true;
       initrdModule = true;
@@ -101,17 +101,33 @@ in
   {
     description = "boundary: function 7, the last PCI function";
     actual = params (system (targets [ "0000:01:00.7" ]) { });
-    expected = [ "gpu_unlock.targets=0000:01:00.7" "gpu_unlock.resume=0" ];
+    expected = [ "gpu_unlock.targets=0000:01:00.7" ];
   }
   {
     description = "boundary: function 8 does not exist";
     actual = params (system (targets [ "0000:01:00.8" ]) { });
     expected = "error";
   }
+  # The kernel module unlocks again after resume unless told not to.
+  {
+    description = "positive: resume left to the kernel module's default";
+    actual = params (system (one // { resume = true; }) { });
+    expected = [ "gpu_unlock.targets=0000:01:00.0" ];
+  }
+  {
+    description = "negative: resume off adds resume=0";
+    actual = params (system (one // { resume = false; }) { });
+    expected = [ "gpu_unlock.targets=0000:01:00.0" "gpu_unlock.resume=0" ];
+  }
+  {
+    description = "corner: resume is on unless set";
+    actual = (system one { }).hardware.nvidia.gpuUnlock.resume;
+    expected = true;
+  }
   {
     description = "corner: upper-case hex, as some tools print it";
     actual = params (system (targets [ "0000:4A:00.0" ]) { });
-    expected = [ "gpu_unlock.targets=0000:4A:00.0" "gpu_unlock.resume=0" ];
+    expected = [ "gpu_unlock.targets=0000:4A:00.0" ];
   }
   {
     description = "corner: disabled adds nothing";
