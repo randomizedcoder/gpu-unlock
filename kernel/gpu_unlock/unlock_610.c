@@ -602,7 +602,7 @@ static int unlock_transaction_claim(struct unlock_transaction_work *work)
 	     (work->pdev->current_state != PCI_UNKNOWN || !work->pdev->pm_cap)) ||
 	    (work->pdev->pm_cap &&
 	     (diag_pci_word(work, false, work->pdev->pm_cap + PCI_PM_CTRL, &pmcsr) ||
-	      (pmcsr & PCI_PM_CTRL_STATE_MASK) != PCI_D0)))
+	      !gpu_unlock_pmcsr_d0(pmcsr))))
 		return GU_RESULT(-EOPNOTSUPP);
 	if ((work->pdev->dev_flags & PCI_DEV_FLAGS_NO_FLR_RESET) ||
 	    !pci_is_pcie(work->pdev) ||
