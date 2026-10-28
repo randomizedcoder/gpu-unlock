@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import tempfile
 import urllib.request
+from pathlib import Path
 
 INPUTS = (
     {
