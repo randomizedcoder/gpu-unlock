@@ -3,7 +3,7 @@
 # Build the module against every set of distribution kernel headers this
 # container offers, with warnings as errors. Run from the repository root.
 set -eu
-. /etc/os-release
+ID=$(sh .github/ci/os-release.sh ID)
 case "$ID" in
 debian)
 	apt-get update -q
@@ -12,7 +12,7 @@ ubuntu)
 	apt-get update -q
 	apt-get install -qy --no-install-recommends make gcc linux-headers-generic
 	# The hardware enablement kernel, where the release has one.
-	apt-get install -qy --no-install-recommends "linux-headers-generic-hwe-$VERSION_ID" || :
+	apt-get install -qy --no-install-recommends "linux-headers-generic-hwe-$(sh .github/ci/os-release.sh VERSION_ID)" || :
 	# Its headers do not pull in the gcc it was built with.
 	apt-get install -qy --no-install-recommends $(grep -h '^CONFIG_CC_VERSION_TEXT=' \
 		/usr/src/linux-headers-*/.config | grep -o 'gcc-[0-9]*' | sort -u) ;;
