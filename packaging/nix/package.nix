@@ -47,6 +47,8 @@ let
       runHook postInstall
     '';
     dontFixup = true;
+    # For the rows that check these pins against the other packaging.
+    passthru = { inherit nvidiaVersion nvidiaSource nvidiaInstaller; };
     meta = {
       description = "Pinned NVIDIA firmware for gpu-unlock";
       license = [ lib.licenses.unfreeRedistributableFirmware lib.licenses.gpl2Only ];
