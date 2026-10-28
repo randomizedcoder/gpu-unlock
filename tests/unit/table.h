@@ -7,7 +7,8 @@
  *
  *   PASS  description  (expected X, got Y)
  *
- * as the Nix eval tests and the analysis gate do.
+ * as the firmware script tables in tests/firmware do. make check-unit
+ * builds and runs them.
  */
 #ifndef GPU_UNLOCK_TEST_TABLE_H
 #define GPU_UNLOCK_TEST_TABLE_H

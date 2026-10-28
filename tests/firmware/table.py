@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Table-driven tests: each row has a description and an expected value.
 
-Each row prints as the Nix tables and the analysis gate do:
+Each row prints as the host C tables in tests/unit do:
 
   PASS  script, description  (expected X, got Y)
+
+make check-python runs them.
 """
 
 from __future__ import annotations
