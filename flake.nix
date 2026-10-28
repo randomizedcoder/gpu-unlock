@@ -51,6 +51,8 @@
             echo 'NVIDIA version and sha256 values match PKGBUILD, RPM spec, and Makefile' > $out
           '';
         nixos-integration = import ./packaging/nix/checks.nix { inherit pkgs nixpkgs; };
+        eval-tests = pkgs.callPackage ./packaging/nix/tests/table.nix { } "eval-tests"
+          (import ./packaging/nix/tests/module.nix { inherit pkgs nixpkgs; });
       } // nixpkgs.lib.optionalAttrs hasScriptedInitrd {
         nixos-integration-scripted = import ./packaging/nix/checks.nix {
           inherit pkgs nixpkgs;
