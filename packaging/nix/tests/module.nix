@@ -8,25 +8,8 @@
 let
   lib = nixpkgs.lib;
 
-  evaluate = settings: extra: nixpkgs.lib.nixosSystem {
-    system = "x86_64-linux";
-    modules = [
-      ../module.nix
-      extra
-      ({ options, ... }: {
-        nixpkgs.pkgs = pkgs;
-        system.stateVersion = "26.05";
-        boot.loader.grub.enable = false;
-        fileSystems."/" = { device = "none"; fsType = "tmpfs"; };
-        hardware.cpu.intel.updateMicrocode = false;
-        hardware.cpu.amd.updateMicrocode = false;
-        hardware.nvidia.gpuUnlock = settings;
-        boot.initrd.systemd = lib.optionalAttrs
-          ((options.boot.initrd.systemd.enable.type.name or null) == "bool")
-          { enable = true; };
-      })
-    ];
-  };
+  testSystem = import ./system.nix { inherit pkgs nixpkgs; };
+  evaluate = settings: extra: testSystem { inherit settings extra; };
   system = settings: extra: (evaluate settings extra).config;
 
   params = config: lib.filter (lib.hasPrefix "gpu_unlock.") config.boot.kernelParams;
