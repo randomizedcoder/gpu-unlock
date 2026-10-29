@@ -3,6 +3,10 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
+  # nix build                        the kernel module, for nixpkgs' default kernel
+  # nix build .#gpu-unlock-firmware  the NVIDIA firmware it loads
+  # nixosModules.default             hardware.nvidia.gpuUnlock, see packaging/nix/README.md
+  # nix flake check                  builds both, checks a built initrd, runs eval-tests
   outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
@@ -11,15 +15,16 @@
         # Only the explicitly requested firmware package needs this exception.
         config.allowUnfreePredicate = pkg: nixpkgs.lib.getName pkg == "gpu-unlock-firmware";
       };
-      module = pkgs.linuxPackages.callPackage ./packaging/nix/package.nix { };
+      kernelModule = pkgs.linuxPackages.callPackage ./packaging/nix/package.nix { };
+      # Where NixOS can still build the older scripted initrd, check that too.
       testSystem = import ./packaging/nix/tests/system.nix { inherit pkgs nixpkgs; };
       hasScriptedInitrd = ((testSystem { }).options.boot.initrd.systemd.enable.type.name or null) == "bool";
     in
     {
       packages.${system} = {
-        default = module;
-        gpu-unlock = module;
-        gpu-unlock-firmware = module.firmware;
+        default = kernelModule;
+        gpu-unlock = kernelModule;
+        gpu-unlock-firmware = kernelModule.firmware;
       };
 
       nixosModules.default = ./packaging/nix/module.nix;
@@ -28,12 +33,10 @@
       checks.${system} = {
         # Kbuild reads KCFLAGS from the environment. Keep -Werror out of the
         # package so new warnings on users' kernels don't fail their builds.
-        kernel-module = module.overrideAttrs { env.KCFLAGS = "-Werror"; };
-        firmware = module.firmware;
+        kernel-module = kernelModule.overrideAttrs { env.KCFLAGS = "-Werror"; };
+        firmware = kernelModule.firmware;
         nixos-integration = import ./packaging/nix/checks.nix { inherit pkgs nixpkgs; };
-        eval-tests = pkgs.callPackage ./packaging/nix/tests/table.nix { } "eval-tests"
-          (import ./packaging/nix/tests/module.nix { inherit pkgs nixpkgs; }
-            ++ import ./packaging/nix/tests/inputs.nix { inherit (nixpkgs) lib; inherit (module) firmware; });
+        eval-tests = import ./packaging/nix/tests { inherit pkgs nixpkgs kernelModule; };
       } // nixpkgs.lib.optionalAttrs hasScriptedInitrd {
         nixos-integration-scripted = import ./packaging/nix/checks.nix {
           inherit pkgs nixpkgs;
