@@ -34,6 +34,8 @@ let
     };
 
   targets = list: { enable = true; targets = list; };
+  # Only the driver's version matters to the module.
+  driver = version: { hardware.nvidia.package = pkgs.emptyDirectory // { inherit version; }; };
   one = targets [ "0000:01:00.0" ];
 in
 [
@@ -119,6 +121,22 @@ in
   {
     description = "positive: resume with nvidia power management does not warn";
     actual = ownWarnings (system one { hardware.nvidia.powerManagement.enable = true; });
+    expected = [ ];
+  }
+  # UseKernelSuspendNotifiers defaults to 1 from 615.71.09 (nv-reg.h).
+  {
+    description = "boundary: resume on the last driver whose notifiers are off warns";
+    actual = builtins.length (ownWarnings (system one (driver "610.57.04")));
+    expected = 1;
+  }
+  {
+    description = "boundary: resume on the first driver whose notifiers are on does not warn";
+    actual = ownWarnings (system one (driver "615.71.09"));
+    expected = [ ];
+  }
+  {
+    description = "positive: resume on a later driver does not warn";
+    actual = ownWarnings (system one (driver "615.78.08"));
     expected = [ ];
   }
   {
