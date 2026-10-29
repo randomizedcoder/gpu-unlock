@@ -3,9 +3,9 @@
 # Rows for the source each package is built from: only the files its
 # build reads, so an edit elsewhere (README, other packaging, CI) does
 # not rebuild the module or the firmware.
-{ module }:
+{ kernelModule }:
 let
-  inherit (module) firmware;
+  inherit (kernelModule) firmware;
   top = src: builtins.attrNames (builtins.readDir src);
 in
 [
@@ -16,7 +16,7 @@ in
   }
   {
     description = "positive: the module is built from kernel/, plus the README and licence it installs";
-    actual = top module.src;
+    actual = top kernelModule.src;
     expected = [ "README.md" "kernel" "licenses" ];
   }
   {
@@ -26,12 +26,12 @@ in
   }
   {
     description = "boundary: the module gets the GPL text it installs, not every licence";
-    actual = top "${module.src}/licenses";
+    actual = top "${kernelModule.src}/licenses";
     expected = [ "GPL-2.0.txt" ];
   }
   {
     description = "corner: the module source has its Kbuild";
-    actual = builtins.pathExists "${module.src}/kernel/gpu_unlock/Kbuild";
+    actual = builtins.pathExists "${kernelModule.src}/kernel/gpu_unlock/Kbuild";
     expected = true;
   }
 ]

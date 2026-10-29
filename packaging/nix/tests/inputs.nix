@@ -9,11 +9,11 @@
 let
   inherit (firmware) nvidiaVersion nvidiaSource nvidiaInstaller;
 
-  read = path: builtins.readFile path;
-  makefile = read ../../../Makefile;
-  pkgbuild = read ../../arch/PKGBUILD;
-  spec = read ../../rpm/gpu-unlock.spec;
-  gitattributes = read ../../../.gitattributes;
+  inherit (builtins) readFile;
+  makefile = readFile ../../../Makefile;
+  pkgbuild = readFile ../../arch/PKGBUILD;
+  spec = readFile ../../rpm/gpu-unlock.spec;
+  gitattributes = readFile ../../../.gitattributes;
 
   lines = text: lib.splitString "\n" text;
 
