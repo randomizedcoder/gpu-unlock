@@ -3,8 +3,6 @@
 let
   version = lib.removeSuffix "\n" (builtins.readFile ../../VERSION);
   nvidiaVersion = "610.43.03";
-  nvidiaSourceSha256 = "7e118923c7a23edc36114d63273a46e3e04e9af98695a42203e7ac2dfe9fc1dc";
-  nvidiaInstallerSha256 = "e084451db730a6df29d3d74f655749c4d236e3c945f7d94b5205e84318fe2f90";
   kernelBuild = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
   kbuildFlags = lib.escapeShellArgs kernelModuleMakeFlags;
   # Keep each derivation's source closure to what that build actually needs so
@@ -28,11 +26,11 @@ let
   };
   nvidiaSource = fetchurl {
     url = "https://download.nvidia.com/XFree86/NVIDIA-kernel-module-source/NVIDIA-kernel-module-source-${nvidiaVersion}.tar.xz";
-    sha256 = nvidiaSourceSha256;
+    sha256 = "7e118923c7a23edc36114d63273a46e3e04e9af98695a42203e7ac2dfe9fc1dc";
   };
   nvidiaInstaller = fetchurl {
     url = "https://download.nvidia.com/XFree86/Linux-x86_64/${nvidiaVersion}/NVIDIA-Linux-x86_64-${nvidiaVersion}-no-compat32.run";
-    sha256 = nvidiaInstallerSha256;
+    sha256 = "e084451db730a6df29d3d74f655749c4d236e3c945f7d94b5205e84318fe2f90";
   };
   firmware = stdenv.mkDerivation {
     pname = "gpu-unlock-firmware";
@@ -54,6 +52,8 @@ let
       runHook postInstall
     '';
     dontFixup = true;
+    # For the rows that check these pins against the other packaging.
+    passthru = { inherit nvidiaVersion nvidiaSource nvidiaInstaller; };
     meta = {
       description = "Pinned NVIDIA firmware for gpu-unlock";
       license = [ lib.licenses.unfreeRedistributableFirmware lib.licenses.gpl2Only ];
@@ -84,7 +84,7 @@ stdenv.mkDerivation {
   # Kernel objects must not go through user-space ELF/RPATH fixups.
   dontFixup = true;
   passthru = {
-    inherit firmware nvidiaVersion nvidiaSourceSha256 nvidiaInstallerSha256;
+    inherit firmware;
     kernelVersion = kernel.modDirVersion;
   };
   meta = {
