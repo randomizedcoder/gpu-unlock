@@ -28,16 +28,20 @@ in
 
     resume = lib.mkOption {
       type = lib.types.bool;
-      default = false;
-      description = "Reapply after suspend. Requires validated NVIDIA suspend-notifier ordering.";
+      default = true;
+      description = "Unlock the cards again after suspend to RAM, before NVIDIA resumes them. false adds gpu_unlock.resume=0.";
     };
   };
 
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.targets != [ ] && (!(builtins.elem "all" cfg.targets) || cfg.targets == [ "all" ]);
-        message = "hardware.nvidia.gpuUnlock.targets must contain PCI addresses or only the single all entry.";
+        assertion = cfg.targets != [ ];
+        message = "hardware.nvidia.gpuUnlock.targets is empty: list the cards' PCI addresses, or all.";
+      }
+      {
+        assertion = builtins.elem "all" cfg.targets -> cfg.targets == [ "all" ];
+        message = "hardware.nvidia.gpuUnlock.targets: all already means every card, so it must be the only entry.";
       }
       {
         assertion = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
@@ -62,10 +66,8 @@ in
       };
     };
     boot.initrd.systemd.storePaths = lib.mkIf systemdInitrd [ "${pkgs.kmod}/bin/modprobe" ];
-    boot.kernelParams = [
-      "gpu_unlock.targets=${lib.concatStringsSep "," cfg.targets}"
-      "gpu_unlock.resume=${if cfg.resume then "1" else "0"}"
-    ];
+    boot.kernelParams = [ "gpu_unlock.targets=${lib.concatStringsSep "," cfg.targets}" ]
+      ++ lib.optional (!cfg.resume) "gpu_unlock.resume=0";
     system.build.gpuUnlock = cfg.package;
     system.build.gpuUnlockFirmware = cfg.package.firmware;
   };
