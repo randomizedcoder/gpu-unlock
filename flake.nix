@@ -12,11 +12,8 @@
         config.allowUnfreePredicate = pkg: nixpkgs.lib.getName pkg == "gpu-unlock-firmware";
       };
       module = pkgs.linuxPackages.callPackage ./packaging/nix/package.nix { };
-      nixosOptions = (nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [{ nixpkgs.pkgs = pkgs; }];
-      }).options;
-      hasScriptedInitrd = (nixosOptions.boot.initrd.systemd.enable.type.name or null) == "bool";
+      testSystem = import ./packaging/nix/tests/system.nix { inherit pkgs nixpkgs; };
+      hasScriptedInitrd = ((testSystem { }).options.boot.initrd.systemd.enable.type.name or null) == "bool";
     in
     {
       packages.${system} = {
