@@ -2,8 +2,8 @@
 #
 # Rows for the NixOS module, each evaluated in a minimal system: the
 # kernel command line, the initrd and packages it produces, and the
-# settings it must refuse ("error" from the option type, or false from
-# its assertions).
+# settings it must refuse ("error" from the option type, or the messages
+# of its assertions).
 { pkgs, nixpkgs }:
 let
   lib = nixpkgs.lib;
@@ -13,7 +13,8 @@ let
   system = settings: extra: (evaluate settings extra).config;
 
   params = config: lib.filter (lib.hasPrefix "gpu_unlock.") config.boot.kernelParams;
-  accepted = config: builtins.all (a: a.assertion) config.assertions;
+  # The messages of the assertions that fail.
+  refusals = config: map (a: a.message) (lib.filter (a: !a.assertion) config.assertions);
 
   # What the module puts in the system, enabled or not.
   # hardware.firmware compresses its packages, so look at what was defined.
@@ -63,18 +64,18 @@ in
   }
   {
     description = "positive: one card passes the assertions";
-    actual = accepted (system one { });
-    expected = true;
+    actual = refusals (system one { });
+    expected = [ ];
   }
   {
     description = "negative: enabled without targets";
-    actual = accepted (system (targets [ ]) { });
-    expected = false;
+    actual = refusals (system (targets [ ]) { });
+    expected = [ "hardware.nvidia.gpuUnlock.targets is empty: list the cards' PCI addresses, or all." ];
   }
   {
     description = "negative: all together with an address";
-    actual = accepted (system (targets [ "all" "0000:01:00.0" ]) { });
-    expected = false;
+    actual = refusals (system (targets [ "all" "0000:01:00.0" ]) { });
+    expected = [ "hardware.nvidia.gpuUnlock.targets: all already means every card, so it must be the only entry." ];
   }
   {
     description = "negative: an address without the PCI domain";
