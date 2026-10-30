@@ -36,17 +36,24 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.targets != [ ] && (!(builtins.elem "all" cfg.targets) || cfg.targets == [ "all" ]);
-        message = "hardware.nvidia.gpuUnlock.targets must contain PCI addresses or only the single all entry.";
+        assertion = cfg.targets != [ ];
+        message = "hardware.nvidia.gpuUnlock.targets is empty: list the cards' PCI addresses, or all.";
+      }
+      {
+        assertion = builtins.elem "all" cfg.targets -> cfg.targets == [ "all" ];
+        message = "hardware.nvidia.gpuUnlock.targets: all already means every card, so it must be the only entry.";
       }
       {
         assertion = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
         message = "The pinned gpu-unlock firmware package is currently validated only on x86_64-linux.";
       }
     ];
-    # Without it nvidia resumes the card during device resume, before the module's
-    # suspend notifier can unlock it again.
-    warnings = lib.optional (cfg.resume && !config.hardware.nvidia.powerManagement.enable)
+    # nvidia must resume the card after the module's suspend notifier unlocks it
+    # again: with power management on, or from 615.71.09, whose
+    # UseKernelSuspendNotifiers defaults to 1.
+    warnings = lib.optional
+      (cfg.resume && !config.hardware.nvidia.powerManagement.enable
+        && lib.versionOlder config.hardware.nvidia.package.version "615.71.09")
       "hardware.nvidia.gpuUnlock.resume needs hardware.nvidia.powerManagement.enable; otherwise cards stay locked after suspend. Enable it, or set resume = false.";
 
     boot.extraModulePackages = [ cfg.package ];
