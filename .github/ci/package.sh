@@ -7,7 +7,7 @@ set -eu
 : "${INPUTS:?set INPUTS to the directory make inputs fills}"
 INPUTS=$(realpath "$INPUTS")
 git config --global --add safe.directory "$PWD"
-. /etc/os-release
+ID=$(sh .github/ci/os-release.sh ID)
 case "$ID" in
 debian|ubuntu)
 	apt-get build-dep -qy .
